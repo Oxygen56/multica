@@ -1570,11 +1570,7 @@ func (s *TaskService) MaybeRetryFailedTask(ctx context.Context, parent db.AgentT
 		go func() {
 			timer := time.NewTimer(backoff)
 			defer timer.Stop()
-			select {
-			case <-bgCtx.Done():
-				return
-			case <-timer.C:
-			}
+			<-timer.C
 			child, err := qs.CreateRetryTask(bgCtx, parent.ID)
 			if err != nil {
 				slog.Warn("rate-limit retry failed",
