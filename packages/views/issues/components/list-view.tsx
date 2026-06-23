@@ -125,22 +125,25 @@ export function ListView({
           const el = document.querySelector(`[data-issue-id="${parentId}"]`) as HTMLElement | null;
           if (el) {
             el.scrollIntoView({ behavior: "auto", block: "center" });
-            // Flash highlight: inset ring + deeper background via inline style
-            // (classList is purged by Tailwind JIT so we avoid it entirely).
+            // Flash highlight: apply the highlight state first, let the
+            // browser paint it, then clear on the next frame so the CSS
+            // transition has a painted "before" state to animate from.
+            // (classList is avoided because Tailwind JIT purges dynamic strings.)
             el.style.transition = "background-color 500ms ease-out, box-shadow 500ms ease-out";
             el.style.backgroundColor = "color-mix(in srgb, var(--color-brand, #a78bfa) 30%, transparent)";
             el.style.boxShadow = "inset 0 0 0 2px var(--color-brand, #a78bfa)";
-            // Force reflow so the browser registers the initial state, then clear
-            // to trigger the transition back to normal.
-            void el.offsetHeight;
-            el.style.backgroundColor = "";
-            el.style.boxShadow = "";
-            // Clean up inline properties after the transition completes.
-            setTimeout(() => {
-              el.style.removeProperty("transition");
-              el.style.removeProperty("background-color");
-              el.style.removeProperty("box-shadow");
-            }, 600);
+            // Let the browser paint the highlight, then clear to trigger the
+            // transition back to the element's normal appearance.
+            requestAnimationFrame(() => {
+              el.style.backgroundColor = "";
+              el.style.boxShadow = "";
+              // Clean up inline properties after the transition completes.
+              setTimeout(() => {
+                el.style.removeProperty("transition");
+                el.style.removeProperty("background-color");
+                el.style.removeProperty("box-shadow");
+              }, 600);
+            });
           }
         });
       });
