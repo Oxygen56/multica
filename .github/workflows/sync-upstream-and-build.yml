@@ -16,6 +16,12 @@ on:
     types: [completed]
     branches: [main]
 
+# Cancel in-progress builds when a new one starts on the same ref.
+# Prevents redundant builds from stacking up (e.g. rapid CI completions).
+concurrency:
+  group: sync-upstream-build-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: oxygen56
@@ -128,8 +134,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
 
   # ── Job 3: Trigger ECS deploy ─────────────────────────────────────────
   deploy-ecs:
