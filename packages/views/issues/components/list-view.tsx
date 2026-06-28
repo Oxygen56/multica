@@ -422,35 +422,40 @@ export function ListView({
     </Accordion.Root>
   );
 
-  if (!dragEnabled) {
+  // When DnD is available at all, keep the DndContext mounted even when
+  // drag is temporarily disabled by expandedParents — unmounting DndContext
+  // replaces the scroll container and loses scroll position.
+  if (onMoveIssue) {
     return (
-      <div className="flex-1 min-h-0 overflow-y-auto p-2 pt-0">
-        {content}
-      </div>
+      <DndContext
+        sensors={dragEnabled ? sensors : []}
+        collisionDetection={dragEnabled ? collisionDetection : undefined}
+        onDragStart={dragEnabled ? handleDragStart : undefined}
+        onDragOver={dragEnabled ? handleDragOver : undefined}
+        onDragEnd={dragEnabled ? handleDragEnd : undefined}
+      >
+        <div className="flex-1 min-h-0 overflow-y-auto p-2 pt-0">
+          {content}
+        </div>
+
+        {dragEnabled && (
+          <DragOverlay dropAnimation={null}>
+            {activeIssue ? (
+              <div className="max-w-2xl rotate-1 cursor-grabbing opacity-90 shadow-lg shadow-black/10 rounded-md border border-border bg-card px-4 py-2">
+                <span className="text-xs text-muted-foreground mr-2">{activeIssue.identifier}</span>
+                <span className="text-sm">{activeIssue.title}</span>
+              </div>
+            ) : null}
+          </DragOverlay>
+        )}
+      </DndContext>
     );
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={collisionDetection}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="flex-1 min-h-0 overflow-y-auto p-2 pt-0">
-        {content}
-      </div>
-
-      <DragOverlay dropAnimation={null}>
-        {activeIssue ? (
-          <div className="max-w-2xl rotate-1 cursor-grabbing opacity-90 shadow-lg shadow-black/10 rounded-md border border-border bg-card px-4 py-2">
-            <span className="text-xs text-muted-foreground mr-2">{activeIssue.identifier}</span>
-            <span className="text-sm">{activeIssue.title}</span>
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+    <div className="flex-1 min-h-0 overflow-y-auto p-2 pt-0">
+      {content}
+    </div>
   );
 }
 
