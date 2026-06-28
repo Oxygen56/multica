@@ -20,6 +20,8 @@ jobs:
   sync-upstream:
     runs-on: ubuntu-latest
     if: ${{ !inputs.skip_sync }}
+    permissions:
+      contents: write
     outputs:
       synced: ${{ steps.sync.outputs.synced }}
     steps:
@@ -89,7 +91,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ env.IMAGE_OWNER }}
-          password: ${{ secrets.GHCR_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
@@ -125,7 +127,7 @@ jobs:
         with:
           host: ${{ secrets.ECS_HOST }}
           username: ${{ secrets.ECS_USER }}
-          key: ${{ secrets.ECS_SSH_KEY }}
+          password: ${{ secrets.ECS_PASSWORD }}
           script: |
             cd /opt/multica
             docker compose -f docker-compose.selfhost.yml pull
