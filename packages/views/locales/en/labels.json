@@ -1,3 +1,6 @@
 {
+  "page": {
+    "title": "Labels"
+  },
   "remove_label": "Remove label {{name}}"
 }

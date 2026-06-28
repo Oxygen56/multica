@@ -33,6 +33,7 @@ import {
   FolderKanban,
   BarChart3,
   X,
+  Tag,
   Zap,
   Users,
 } from "lucide-react";
@@ -115,6 +116,7 @@ type NavKey =
   | "agents"
   | "squads"
   | "usage"
+  | "labels"
   | "runtimes"
   | "skills"
   | "settings";
@@ -129,6 +131,7 @@ type NavLabelKey =
   | "agents"
   | "squads"
   | "usage"
+  | "labels"
   | "runtimes"
   | "skills"
   | "settings";
@@ -148,6 +151,7 @@ const workspaceNav: { key: NavKey; labelKey: NavLabelKey; icon: typeof Inbox }[]
 ];
 
 const configureNav: { key: NavKey; labelKey: NavLabelKey; icon: typeof Inbox }[] = [
+  { key: "labels", labelKey: "labels", icon: Tag },
   { key: "runtimes", labelKey: "runtimes", icon: Monitor },
   { key: "skills", labelKey: "skills", icon: BookOpenText },
   { key: "settings", labelKey: "settings", icon: Settings },

@@ -1,3 +1,6 @@
 {
+  "page": {
+    "title": "ラベル"
+  },
   "remove_label": "ラベル{{name}}を削除"
 }
