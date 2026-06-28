@@ -28,7 +28,8 @@ WORKDIR /app
 # Copy installed dependencies (preserves pnpm symlink structure)
 COPY --from=deps /app ./
 
-# Copy source
+# Copy source (bump CACHE_BUST to force layer invalidation when Docker GHA cache drifts)
+ARG CACHE_BUST=2
 COPY package.json turbo.json pnpm-workspace.yaml ./
 COPY apps/web/ apps/web/
 COPY packages/ packages/
