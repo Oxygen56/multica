@@ -21,6 +21,9 @@ type childDoneFixture struct {
 func newChildDoneFixture(t *testing.T, parentStatus string) childDoneFixture {
 	t.Helper()
 
+	// Child issues require an assignee — create one test agent for the child.
+	childAgentID := createHandlerTestAgent(t, "child-done-agent", nil)
+
 	w := httptest.NewRecorder()
 	req := newRequest("POST", "/api/issues?workspace_id="+testWorkspaceID, map[string]any{
 		"title":  "child-done parent " + time.Now().Format(time.RFC3339Nano),
@@ -40,6 +43,8 @@ func newChildDoneFixture(t *testing.T, parentStatus string) childDoneFixture {
 		"title":           "child-done child " + time.Now().Format(time.RFC3339Nano),
 		"status":          "in_progress",
 		"parent_issue_id": parent.ID,
+		"assignee_type":   "agent",
+		"assignee_id":     childAgentID,
 	})
 	testHandler.CreateIssue(w, req)
 	if w.Code != http.StatusCreated {
