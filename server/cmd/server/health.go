@@ -35,6 +35,7 @@ type serverHealth struct {
 	cacheTTL           time.Duration
 	refreshMu          sync.Mutex
 	cache              atomic.Pointer[cachedReadiness]
+	version            string
 }
 
 type cachedReadiness struct {
@@ -44,7 +45,9 @@ type cachedReadiness struct {
 }
 
 type liveResponse struct {
-	Status string `json:"status"`
+	Status    string `json:"status"`
+	Timestamp string `json:"timestamp"`
+	Version   string `json:"version"`
 }
 
 type readinessResponse struct {
@@ -57,18 +60,23 @@ type readinessChecks struct {
 	Migrations string `json:"migrations"`
 }
 
-func newServerHealth(pool *pgxpool.Pool) *serverHealth {
+func newServerHealth(pool *pgxpool.Pool, version string) *serverHealth {
 	requiredMigrations, err := migrations.AllVersions()
 	return &serverHealth{
 		db:                 pool,
 		requiredMigrations: requiredMigrations,
 		initErr:            err,
 		cacheTTL:           readinessCacheTTL,
+		version:            version,
 	}
 }
 
 func (h *serverHealth) liveHandler(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, liveResponse{Status: "ok"})
+	writeJSON(w, http.StatusOK, liveResponse{
+		Status:    "ok",
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		Version:   h.version,
+	})
 }
 
 func (h *serverHealth) readyHandler(w http.ResponseWriter, r *http.Request) {
