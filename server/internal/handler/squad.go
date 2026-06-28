@@ -1259,6 +1259,30 @@ func commentRoutesViaMention(content string, parentComment *db.Comment, authorTy
 	return commentMentionsAnyone(parentComment.Content)
 }
 
+// commentRoutesViaAgentMention returns true when the comment routes work to a
+// specific agent via @mention — either directly (agent/squad/@all), or by
+// inheriting the parent (thread root) mentions on a plain reply. Unlike
+// commentRoutesViaMention, this ignores member mentions because a @member
+// mention does not route work to an agent — it just notifies a person.
+func commentRoutesViaAgentMention(content string, parentComment *db.Comment, authorType string) bool {
+	mentions := util.ParseMentions(content)
+	for _, m := range mentions {
+		if m.Type == "agent" || m.Type == "squad" || m.Type == "all" {
+			return true
+		}
+	}
+	if !shouldInheritParentMentions(parentComment, mentions, authorType) {
+		return false
+	}
+	parentMentions := util.ParseMentions(parentComment.Content)
+	for _, m := range parentMentions {
+		if m.Type == "agent" || m.Type == "squad" || m.Type == "all" {
+			return true
+		}
+	}
+	return false
+}
+
 // The squad-leader assign/promotion readiness decision now lives in the single
 // service.IssueService.WillEnqueueRun predicate (MUL-3375), shared by the issue
 // write paths and the preview endpoint. The former handler-local mirrors

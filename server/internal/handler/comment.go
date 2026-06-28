@@ -1371,7 +1371,33 @@ func (h *Handler) computeCommentAgentTriggers(ctx context.Context, issue db.Issu
 		triggers = append(triggers, trigger)
 	}
 
-	if actorType == "member" && h.shouldEnqueueOnComment(ctx, issue, actorType, actorID, opts) &&
+	// Determine whether the comment routes work via explicit @mention.
+	// Mention exclusivity (Rule 1) takes priority over both thread-parent
+	// routing (Rule 2) and assignee fallback (Rule 3).
+	hasAgentRoutingMention := commentRoutesViaAgentMention(content, parentComment, actorType)
+
+	// Rule 2: thread-parent routing. A member reply to an agent-authored
+	// comment routes to that agent — not the issue assignee. This lets a
+	// member continue a conversation with an agent without re-@mentioning.
+	isReplyToAgent := parentComment != nil && parentComment.AuthorType == "agent"
+	if actorType == "member" && isReplyToAgent && !hasAgentRoutingMention {
+		if agent, err := h.Queries.GetAgentInWorkspace(ctx, db.GetAgentInWorkspaceParams{
+			ID:          parentComment.AuthorID,
+			WorkspaceID: issue.WorkspaceID,
+		}); err == nil && agent.RuntimeID.Valid && !agent.ArchivedAt.Valid {
+			if h.canAccessPrivateAgent(ctx, agent, actorType, actorID, uuidToString(issue.WorkspaceID)) {
+				hasPending, pendingErr := h.hasPendingTaskForIssueAndAgent(ctx, issue.ID, parentComment.AuthorID, opts)
+				if pendingErr == nil && !hasPending {
+					add(commentAgentTrigger{Agent: agent, Source: commentTriggerSourceMentionAgent})
+				}
+			}
+		}
+	}
+
+	// Rule 3: assignee fallback. Only fires when neither Rule 1 nor Rule 2
+	// applies — no agent-targeting @mention, and not a reply to an agent.
+	if actorType == "member" && !hasAgentRoutingMention && !isReplyToAgent &&
+		h.shouldEnqueueOnComment(ctx, issue, actorType, actorID, opts) &&
 		!h.commentMentionsOthersButNotAssignee(content, issue) &&
 		!h.isReplyToMemberThread(ctx, parentComment, content, issue) {
 		if agent, err := h.Queries.GetAgentInWorkspace(ctx, db.GetAgentInWorkspaceParams{
@@ -1450,12 +1476,21 @@ func (h *Handler) hasPendingTaskForIssueAndAgent(ctx context.Context, issueID, a
 	})
 }
 
-// commentMentionsOthersButNotAssignee returns true if the comment @mentions
-// anyone but does NOT @mention the issue's assignee agent. This is used to
-// suppress the on_comment trigger when the user is directing their comment at
-// someone else (e.g. sharing results with a colleague, asking another agent).
-// @all is treated as a broadcast — it suppresses the trigger because the user
-// is announcing to everyone, not specifically requesting work from the agent.
+// commentMentionsOthersButNotAssignee returns true when the on_comment assignee
+// trigger should be suppressed. Suppression happens in three cases:
+//
+//   1. Any agent or squad is @mentioned — the comment routes via the mention
+//      path (Rule 1: mention exclusivity). Even if the assignee is among the
+//      mentioned agents, the explicit mention triggers them; the assignee
+//      on_comment trigger stays out of the way so the same comment never
+//      enqueues two agents for the same intent.
+//   2. @all — a broadcast, not a direct work request.
+//   3. Only members are @mentioned (without the assignee) — the user is
+//      talking to specific people, not requesting work from the agent.
+//
+// Returns false (allow on_comment) only when the comment has no routing
+// mentions at all, or when only members are mentioned and the assignee
+// member is among them.
 func (h *Handler) commentMentionsOthersButNotAssignee(content string, issue db.Issue) bool {
 	mentions := util.ParseMentions(content)
 	// Filter out issue mentions — they are cross-references, not @people.
@@ -1473,16 +1508,26 @@ func (h *Handler) commentMentionsOthersButNotAssignee(content string, issue db.I
 	if util.HasMentionAll(mentions) {
 		return true
 	}
+	// Rule 1 (mention exclusivity): any agent or squad @mention routes work
+	// through the explicit mention path. Suppress the assignee on_comment so
+	// only the explicitly mentioned agent(s) respond.
+	for _, m := range mentions {
+		if m.Type == "agent" || m.Type == "squad" {
+			return true
+		}
+	}
+	// Only member mentions remain. Suppress unless the assignee (member) is
+	// among them.
 	if !issue.AssigneeID.Valid {
-		return true // No assignee — mentions target others
+		return true // No assignee — mentions target only other members
 	}
 	assigneeID := uuidToString(issue.AssigneeID)
 	for _, m := range mentions {
 		if m.ID == assigneeID {
-			return false // Assignee is mentioned — allow trigger
+			return false // Assignee member is mentioned — allow trigger
 		}
 	}
-	return true // Others mentioned but not assignee — suppress trigger
+	return true // Only other members mentioned — suppress trigger
 }
 
 // isReplyToMemberThread returns true if the comment is a reply in a thread
