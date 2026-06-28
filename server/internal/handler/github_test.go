@@ -2104,6 +2104,8 @@ func TestWebhook_MergedPR_ChildWithParent_NotifiesParent(t *testing.T) {
 		"title":           "PR-merge child " + time.Now().Format(time.RFC3339Nano),
 		"status":          "in_progress",
 		"parent_issue_id": parent.ID,
+			"assignee_type": "agent",
+			"assignee_id":   createHandlerTestAgent(t, "ci-fix-agent-8", nil),
 	})
 	testHandler.CreateIssue(w, req)
 	if w.Code != http.StatusCreated {

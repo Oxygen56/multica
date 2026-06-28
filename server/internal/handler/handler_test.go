@@ -574,6 +574,8 @@ func TestCreateIssueRejectsCrossWorkspaceParent(t *testing.T) {
 	req := newRequest("POST", "/api/issues?workspace_id="+testWorkspaceID, map[string]any{
 		"title":           "Should be rejected",
 		"parent_issue_id": foreignParentID,
+			"assignee_type": "agent",
+			"assignee_id":   createHandlerTestAgent(t, "ci-fix-agent-1", nil),
 	})
 	testHandler.CreateIssue(w, req)
 	if w.Code != http.StatusBadRequest {
@@ -698,6 +700,8 @@ func TestCreateSubIssueInheritsParentProject(t *testing.T) {
 	req = newRequest("POST", "/api/issues?workspace_id="+testWorkspaceID, map[string]any{
 		"title":           "Child without explicit project",
 		"parent_issue_id": parentID,
+			"assignee_type": "agent",
+			"assignee_id":   createHandlerTestAgent(t, "ci-fix-agent-2", nil),
 	})
 	testHandler.CreateIssue(w, req)
 	if w.Code != http.StatusCreated {
@@ -780,6 +784,8 @@ func TestCreateSubIssueUsesExplicitProjectOverParentProject(t *testing.T) {
 	req = newRequest("POST", "/api/issues?workspace_id="+testWorkspaceID, map[string]any{
 		"title":           "Child with explicit project",
 		"parent_issue_id": parentID,
+			"assignee_type": "agent",
+			"assignee_id":   createHandlerTestAgent(t, "ci-fix-agent-3", nil),
 		"project_id":      childProjectID,
 	})
 	testHandler.CreateIssue(w, req)
@@ -841,6 +847,8 @@ func TestCreateIssueRejectsActiveDuplicate(t *testing.T) {
 		"title":           title,
 		"status":          "in_progress",
 		"parent_issue_id": parentID,
+			"assignee_type": "agent",
+			"assignee_id":   createHandlerTestAgent(t, "ci-fix-agent-4", nil),
 		"project_id":      projectID,
 	})
 	testHandler.CreateIssue(w, req)
@@ -857,6 +865,8 @@ func TestCreateIssueRejectsActiveDuplicate(t *testing.T) {
 	req = newRequest("POST", "/api/issues?workspace_id="+testWorkspaceID, map[string]any{
 		"title":           "  sh-pm-synth-01   synthesize recommendation-to-shortlist planning outputs " + suffix + "  ",
 		"parent_issue_id": parentID,
+			"assignee_type": "agent",
+			"assignee_id":   createHandlerTestAgent(t, "ci-fix-agent-5", nil),
 		"project_id":      projectID,
 	})
 	testHandler.CreateIssue(w, req)
@@ -885,6 +895,8 @@ func TestCreateIssueRejectsActiveDuplicate(t *testing.T) {
 	req = newRequest("POST", "/api/issues?workspace_id="+testWorkspaceID, map[string]any{
 		"title":           title,
 		"parent_issue_id": parentID,
+			"assignee_type": "agent",
+			"assignee_id":   createHandlerTestAgent(t, "ci-fix-agent-6", nil),
 		"project_id":      projectID,
 		"allow_duplicate": true,
 	})
@@ -905,6 +917,8 @@ func TestCreateIssueRejectsActiveDuplicate(t *testing.T) {
 	req = newRequest("POST", "/api/issues?workspace_id="+testWorkspaceID, map[string]any{
 		"title":           title,
 		"parent_issue_id": parentID,
+			"assignee_type": "agent",
+			"assignee_id":   createHandlerTestAgent(t, "ci-fix-agent-7", nil),
 		"project_id":      projectID,
 	})
 	testHandler.CreateIssue(w, req)

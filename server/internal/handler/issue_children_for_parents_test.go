@@ -25,6 +25,7 @@ type childrenBatchFixture struct {
 func newChildrenBatchFixture(t *testing.T) childrenBatchFixture {
 	t.Helper()
 
+	batchChildAgentID := createHandlerTestAgent(t, "batch-children-agent", nil)
 	mkIssue := func(title, status, parentID string) IssueResponse {
 		w := httptest.NewRecorder()
 		body := map[string]any{
@@ -33,6 +34,8 @@ func newChildrenBatchFixture(t *testing.T) childrenBatchFixture {
 		}
 		if parentID != "" {
 			body["parent_issue_id"] = parentID
+			body["assignee_type"] = "agent"
+			body["assignee_id"] = batchChildAgentID
 		}
 		req := newRequest("POST", "/api/issues?workspace_id="+testWorkspaceID, body)
 		testHandler.CreateIssue(w, req)
