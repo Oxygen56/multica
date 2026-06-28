@@ -1001,6 +1001,7 @@ const (
 	commentTriggerSourceIssueAssignee      commentAgentTriggerSource = "issue_assignee"
 	commentTriggerSourceMentionAgent       commentAgentTriggerSource = "mention_agent"
 	commentTriggerSourceMentionSquadLeader commentAgentTriggerSource = "mention_squad_leader"
+	commentTriggerSourceThreadOwner       commentAgentTriggerSource = "thread_owner"
 )
 
 type commentAgentTrigger struct {
@@ -1021,6 +1022,8 @@ func commentAgentTriggerReason(trigger commentAgentTrigger) string {
 		return "This agent was mentioned in the comment."
 	case commentTriggerSourceMentionSquadLeader:
 		return "A mentioned squad will trigger its leader."
+	case commentTriggerSourceThreadOwner:
+		return "Replying to this agent's comment will trigger them."
 	default:
 		return "This comment will trigger this agent."
 	}
@@ -1351,6 +1354,13 @@ func (h *Handler) enqueueCommentAgentTriggers(ctx context.Context, issue db.Issu
 					"agent_id", uuidToString(trigger.Agent.ID),
 					"error", err)
 			}
+		case commentTriggerSourceThreadOwner:
+			if _, err := h.TaskService.EnqueueTaskForMention(ctx, issue, trigger.Agent.ID, triggerCommentID); err != nil {
+				slog.Warn("enqueue thread owner task failed",
+					"issue_id", uuidToString(issue.ID),
+					"agent_id", uuidToString(trigger.Agent.ID),
+					"error", err)
+			}
 		}
 	}
 }
@@ -1371,6 +1381,40 @@ func (h *Handler) computeCommentAgentTriggers(ctx context.Context, issue db.Issu
 		triggers = append(triggers, trigger)
 	}
 
+	// Priority 1: @mention exclusivity.
+	// If the comment @mentions any agent or squad (directly or via parent
+	// inheritance), route exclusively to the mentioned agents. The issue
+	// assignee is intentionally NOT triggered — the user explicitly chose
+	// who should respond. See GitHub #4650.
+	if commentHasAgentOrSquadMention(content, parentComment, actorType) {
+		for _, trigger := range h.computeMentionedAgentCommentTriggers(ctx, issue, content, parentComment, actorType, actorID, opts) {
+			add(trigger)
+		}
+		return triggers
+	}
+
+	// Priority 2: Thread ownership.
+	// When a member replies to a comment authored by an agent (and there
+	// are no agent @mentions — handled above), route to the parent
+	// comment's agent author. This keeps conversations flowing naturally:
+	// replying to an agent means you're talking to that agent.
+	if trigger := h.computeThreadOwnerTrigger(ctx, issue, content, parentComment, actorType, actorID, opts); trigger != nil {
+		add(*trigger)
+		return triggers
+	}
+
+	// Priority 3: Assignee fallback.
+	// Default routing when no explicit @mention or thread ownership
+	// applies. Handles both squad-assigned and agent-assigned issues.
+
+	// 3a: Squad-assigned issue — trigger squad leader.
+	if trigger, ok := h.computeAssignedSquadLeaderCommentTrigger(ctx, issue, content, parentComment, actorType, actorID, opts); ok {
+		add(trigger)
+		return triggers
+	}
+
+	// 3b: Agent-assigned issue — trigger assignee, subject to existing
+	// suppression rules (member-thread guard, member-mention guard).
 	if actorType == "member" && h.shouldEnqueueOnComment(ctx, issue, actorType, actorID, opts) &&
 		!h.commentMentionsOthersButNotAssignee(content, issue) &&
 		!h.isReplyToMemberThread(ctx, parentComment, content, issue) {
@@ -1382,15 +1426,67 @@ func (h *Handler) computeCommentAgentTriggers(ctx context.Context, issue db.Issu
 		}
 	}
 
-	if trigger, ok := h.computeAssignedSquadLeaderCommentTrigger(ctx, issue, content, parentComment, actorType, actorID, opts); ok {
-		add(trigger)
-	}
-
-	for _, trigger := range h.computeMentionedAgentCommentTriggers(ctx, issue, content, parentComment, actorType, actorID, opts) {
-		add(trigger)
-	}
-
 	return triggers
+}
+
+// commentHasAgentOrSquadMention checks whether content (or its inherited
+// parent mentions) contains any agent or squad @mention. Used by the
+// @mention exclusivity rule: when a user explicitly @mentions an agent or
+// squad, the assignee fallback is suppressed so only the mentioned party
+// responds.
+func commentHasAgentOrSquadMention(content string, parentComment *db.Comment, authorType string) bool {
+	mentions := util.ParseMentions(content)
+	if shouldInheritParentMentions(parentComment, mentions, authorType) {
+		mentions = util.ParseMentions(parentComment.Content)
+	}
+	for _, m := range mentions {
+		if m.Type == "agent" || m.Type == "squad" {
+			return true
+		}
+	}
+	return false
+}
+
+// computeThreadOwnerTrigger returns a trigger for the parent comment's
+// author when a member replies to an agent's comment. This implements the
+// thread ownership routing rule: replying to an agent routes to that agent.
+//
+// Guards:
+//   - parent must exist and be authored by an agent
+//   - actor must be a member (agent→agent replies don't inherit thread routing)
+//   - the thread owner agent must be active (has runtime, not archived)
+//   - private-agent access gate must pass
+//   - no pending task for this issue+agent (coalescing dedup)
+func (h *Handler) computeThreadOwnerTrigger(ctx context.Context, issue db.Issue, content string, parentComment *db.Comment, authorType, authorID string, opts commentTriggerComputeOptions) *commentAgentTrigger {
+	if parentComment == nil || parentComment.AuthorType != "agent" {
+		return nil
+	}
+	if authorType != "member" {
+		return nil
+	}
+
+	parentAgentUUID := parentComment.AuthorID
+	agent, err := h.Queries.GetAgentInWorkspace(ctx, db.GetAgentInWorkspaceParams{
+		ID:          parentAgentUUID,
+		WorkspaceID: issue.WorkspaceID,
+	})
+	if err != nil || !agent.RuntimeID.Valid || agent.ArchivedAt.Valid {
+		return nil
+	}
+
+	// Private-agent gate: members can only trigger private agents they own,
+	// or when they are workspace admin/owner.
+	if !h.canAccessPrivateAgent(ctx, agent, authorType, authorID, uuidToString(issue.WorkspaceID)) {
+		return nil
+	}
+
+	// Dedup: skip if this agent already has a pending task for this issue.
+	hasPending, err := h.hasPendingTaskForIssueAndAgent(ctx, issue.ID, parentAgentUUID, opts)
+	if err != nil || hasPending {
+		return nil
+	}
+
+	return &commentAgentTrigger{Agent: agent, Source: commentTriggerSourceThreadOwner}
 }
 
 func (h *Handler) computeAssignedSquadLeaderCommentTrigger(ctx context.Context, issue db.Issue, content string, parentComment *db.Comment, authorType, authorID string, opts commentTriggerComputeOptions) (commentAgentTrigger, bool) {

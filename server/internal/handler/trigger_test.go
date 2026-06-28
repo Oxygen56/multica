@@ -368,3 +368,75 @@ func TestTriggerTasksForComment_NoteShortCircuits(t *testing.T) {
 	// Must not panic — the guard short-circuits before any DB access.
 	h.triggerTasksForComment(context.Background(), issue, comment, nil, "member", memberID, nil)
 }
+
+// -------------------------------------------------------------------
+// commentHasAgentOrSquadMention — @mention exclusivity gate (GitHub #4650)
+// -------------------------------------------------------------------
+
+func TestCommentHasAgentOrSquadMention(t *testing.T) {
+	agentParent := &db.Comment{AuthorType: "agent", AuthorID: testUUID(agentAssigneeID), Content: "agent comment"}
+	memberParent := &db.Comment{AuthorType: "member", AuthorID: testUUID(memberID), Content: "member comment"}
+	memberParentMentioningAgent := &db.Comment{
+		AuthorType: "member",
+		AuthorID:   testUUID(memberID),
+		Content:    fmt.Sprintf("[@Agent](mention://agent/%s) look", otherAgentID),
+	}
+
+	tests := []struct {
+		name          string
+		content       string
+		parentComment *db.Comment
+		authorType    string
+		want          bool
+	}{
+		{"no mentions", "hello world", nil, "member", false},
+		{"member mention only", fmt.Sprintf("[@Bob](mention://member/%s) hi", memberID), nil, "member", false},
+		{"issue mention only", "[MUL-1](mention://issue/44c266e7-f6dd-4be3-9140-5ac40233f79c)", nil, "member", false},
+		{"agent mention", fmt.Sprintf("[@Agent](mention://agent/%s) fix", agentAssigneeID), nil, "member", true},
+		{"other agent mention", fmt.Sprintf("[@Other](mention://agent/%s) help", otherAgentID), nil, "member", true},
+		{"squad mention", fmt.Sprintf("[@Squad](mention://squad/%s) discuss", otherAgentID), nil, "member", true},
+		{"agent + member mentions", fmt.Sprintf("[@Agent](mention://agent/%s) [@Bob](mention://member/%s)", agentAssigneeID, memberID), nil, "member", true},
+		{"@all mention", "[@All](mention://all/all) heads up", nil, "member", false},
+		{"reply inherits parent agent mention", "ok", memberParentMentioningAgent, "member", true},
+		{"reply with own mention no inherit", fmt.Sprintf("[@Bob](mention://member/%s) ok", memberID), memberParentMentioningAgent, "member", false},
+		{"reply to agent parent without mention", "got it", agentParent, "member", false},
+		{"reply to member parent without mention", "agreed", memberParent, "member", false},
+		{"agent reply does not inherit", "ok", memberParentMentioningAgent, "agent", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := commentHasAgentOrSquadMention(tt.content, tt.parentComment, tt.authorType)
+			if got != tt.want {
+				t.Errorf("commentHasAgentOrSquadMention(%q, parent=%+v, %s) = %v, want %v",
+					tt.content, tt.parentComment, tt.authorType, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestCommentRoutingExclusivity verifies the three-tier routing behaviour.
+func TestCommentRoutingExclusivity(t *testing.T) {
+	h := &Handler{}
+	issue := issueWithAgentAssignee()
+	contentBoth := fmt.Sprintf("[@Agent](mention://agent/%s) [@Other](mention://agent/%s) discuss", agentAssigneeID, otherAgentID)
+	if h.commentMentionsOthersButNotAssignee(contentBoth, issue) {
+		t.Error("old guard returns false when assignee IS mentioned alongside another agent")
+	}
+	if !commentHasAgentOrSquadMention(contentBoth, nil, "member") {
+		t.Error("@mention exclusivity should fire when agents are mentioned")
+	}
+}
+
+// TestCommentTriggerReason_ThreadOwner verifies the reason for thread owner source.
+func TestCommentTriggerReason_ThreadOwner(t *testing.T) {
+	trigger := commentAgentTrigger{
+		Agent:  db.Agent{Name: "TestAgent"},
+		Source: commentTriggerSourceThreadOwner,
+	}
+	reason := commentAgentTriggerReason(trigger)
+	if reason != "Replying to this agent's comment will trigger them." {
+		t.Errorf("unexpected reason: %q", reason)
+	}
+}
+
