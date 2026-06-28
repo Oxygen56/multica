@@ -13,28 +13,33 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 # Copy server source
 COPY server/ ./server/
 
-# Build all binaries in parallel with Go build cache persistence.
-# BuildKit cache mounts keep /root/.cache/go-build and /go/pkg/mod
-# across builds even when the COPY layer above is invalidated by a
-# source change — Go recompiles only changed packages, not everything.
-# NOTE: Use `;` (not `&&`) before the first `&` — `&&` binds tighter
-# than `&`, so `cd && cmd &` backgrounds only the cd+cmd compound, but
-# subsequent commands run in the original CWD.  With `;` the cd runs
-# synchronously first, then each background build inherits that CWD.
+# Build binaries sequentially. --mount=type=cache for /root/.cache/go-build
+# persists compiled packages across builds and across commits — even when the
+# COPY layer above is invalidated, Go reuses cached .a files for unchanged
+# packages.  This is the primary optimization: on incremental changes compilation
+# drops from a full rebuild to a few seconds.
 ARG VERSION=dev
 ARG COMMIT=unknown
 ARG DATE=unknown
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
-    cd server; \
-    CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${COMMIT}" -o bin/server ./cmd/server & \
-    CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}" -o bin/multica ./cmd/multica & \
-    CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/migrate ./cmd/migrate & \
-    CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/backfill_task_usage_hourly ./cmd/backfill_task_usage_hourly & \
-    CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/backfill_codex_usage_cache ./cmd/backfill_codex_usage_cache & \
-    wait; \
-    test -x bin/server && test -x bin/multica && test -x bin/migrate && \
-    test -x bin/backfill_task_usage_hourly && test -x bin/backfill_codex_usage_cache
+    cd server && CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${COMMIT}" -o bin/server ./cmd/server
+
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    cd server && CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}" -o bin/multica ./cmd/multica
+
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    cd server && CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/migrate ./cmd/migrate
+
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    cd server && CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/backfill_task_usage_hourly ./cmd/backfill_task_usage_hourly
+
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    cd server && CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/backfill_codex_usage_cache ./cmd/backfill_codex_usage_cache
 
 # --- Runtime stage ---
 FROM alpine:3.21
