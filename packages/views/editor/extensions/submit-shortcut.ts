@@ -29,6 +29,10 @@ export function createSubmitExtension(
           if (editor.isActive("codeBlock")) return false;
           return onSubmit();
         };
+        // ProseMirror keymap: "Enter" catches all Enter presses including
+        // Shift-Enter. Bind Shift-Enter explicitly to short-circuit it —
+        // returning false lets the default behaviour (insert newline) through.
+        shortcuts["Shift-Enter"] = () => false;
       }
       return shortcuts;
     },
