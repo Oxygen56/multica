@@ -237,7 +237,10 @@
     "link_copy_failed": "Failed to copy link",
     "workdir_path_copied": "Workdir path copied",
     "workdir_path_copy_failed": "Failed to copy workdir path",
-    "workdir_path_unavailable": "No local workdir yet — issue has not been run by a local agent"
+    "workdir_path_unavailable": "No local workdir yet — issue has not been run by a local agent",
+    "desc_show_less": "Show less",
+    "desc_show_more": "Show more",
+    "jump_to_latest": "Jump to latest"
   },
   "timeline": {
     "loading": "Loading..."
