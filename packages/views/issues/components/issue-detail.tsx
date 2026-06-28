@@ -744,6 +744,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
   const [propertiesOpen, setPropertiesOpen] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [parentIssueOpen, setParentIssueOpen] = useState(true);
+  const [subIssuesSidebarOpen, setSubIssuesSidebarOpen] = useState(true);
   const [pullRequestsOpen, setPullRequestsOpen] = useState(true);
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [tokenUsageOpen, setTokenUsageOpen] = useState(true);
@@ -1596,6 +1597,44 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
           </div>}
         </div>
       )}
+
+      {/* Sub-issues — sidebar section. Renders only when the issue has
+          children. Uses the same `childIssues` data as the inline list
+          below the description — no extra network request. */}
+      {childIssues.length > 0 && (() => {
+        const doneCount = childIssues.filter((c) => c.status === "done").length;
+        return (
+          <div>
+            <button
+              type="button"
+              className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors mb-2 hover:bg-accent/70 ${subIssuesSidebarOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
+              onClick={() => setSubIssuesSidebarOpen(!subIssuesSidebarOpen)}
+            >
+              {t(($) => $.detail.section_sub_issues)}
+              <ChevronRight className={`!size-3 shrink-0 stroke-[2.5] text-muted-foreground transition-transform ${subIssuesSidebarOpen ? "rotate-90" : ""}`} />
+              <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-2 py-0.5">
+                <ProgressRing done={doneCount} total={childIssues.length} size={11} />
+                <span className="text-[11px] text-muted-foreground tabular-nums font-medium">
+                  {doneCount}/{childIssues.length}
+                </span>
+              </span>
+            </button>
+            {subIssuesSidebarOpen && <div className="pl-2 space-y-0.5">
+              {childIssues.map((child) => (
+                <AppLink
+                  key={child.id}
+                  href={paths.issueDetail(child.id)}
+                  className="flex items-center gap-1.5 rounded-md px-2 py-1.5 -mx-2 text-xs hover:bg-accent/50 transition-colors group"
+                >
+                  <StatusIcon status={child.status} className="h-3.5 w-3.5 shrink-0" />
+                  <span className="text-muted-foreground shrink-0 tabular-nums">{child.identifier}</span>
+                  <span className="truncate group-hover:text-foreground">{child.title}</span>
+                </AppLink>
+              ))}
+            </div>}
+          </div>
+        );
+      })()}
 
       {/* Pull requests — hidden when the workspace disables the PR sidebar
           (or the GitHub master switch is off). Backend data is kept either
