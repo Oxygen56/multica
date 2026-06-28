@@ -5,8 +5,9 @@ import { Extension } from "@tiptap/core";
  * when there's no submit handler wired up. That lets us fall through to the
  * default Enter behaviour — inserting a newline — when appropriate.
  *
- * `submitOnEnter` — when true, bare Enter also submits (chat-style). When
- * false, only Mod-Enter submits and bare Enter keeps its default (newline).
+ * `submitOnEnter` — when true, bare Enter submits (chat-style) and all
+ * modifier combos (Shift-Enter, Mod-Enter) insert a newline. When false,
+ * only Mod-Enter submits and bare Enter keeps its default (newline).
  */
 export function createSubmitExtension(
   onSubmit: () => boolean,
@@ -15,10 +16,11 @@ export function createSubmitExtension(
   return Extension.create({
     name: "submitShortcut",
     addKeyboardShortcuts() {
-      const shortcuts: Record<string, () => boolean> = {
-        "Mod-Enter": () => onSubmit(),
-      };
+      const shortcuts: Record<string, () => boolean> = {};
       if (submitOnEnter) {
+        // Chat-style: bare Enter submits. All modifier + Enter combos
+        // (Shift-Enter, Mod-Enter) are explicitly short-circuited to
+        // return false so ProseMirror inserts a newline instead.
         shortcuts.Enter = () => {
           const editor = this.editor;
           // IME guard — never submit while composing a multi-key input
@@ -29,10 +31,11 @@ export function createSubmitExtension(
           if (editor.isActive("codeBlock")) return false;
           return onSubmit();
         };
-        // ProseMirror keymap: "Enter" catches all Enter presses including
-        // Shift-Enter. Bind Shift-Enter explicitly to short-circuit it —
-        // returning false lets the default behaviour (insert newline) through.
         shortcuts["Shift-Enter"] = () => false;
+        shortcuts["Mod-Enter"] = () => false;
+      } else {
+        // Default: only Mod-Enter submits, bare Enter is a normal newline.
+        shortcuts["Mod-Enter"] = () => onSubmit();
       }
       return shortcuts;
     },
