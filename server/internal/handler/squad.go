@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -803,6 +804,309 @@ func (h *Handler) UpdateSquadMemberRole(w http.ResponseWriter, r *http.Request) 
 }
 
 // ── Squad Leader Evaluation ──────────────────────────────────────────────────
+	// ── Squad Capability ─────────────────────────────────────────────────────────
+
+	// SquadCapabilityResponse is the JSON shape of a squad's declared capability.
+	type SquadCapabilityResponse struct {
+		SquadID     string   `json:"squad_id"`
+		SquadName   string   `json:"squad_name"`
+		Domains     []string `json:"domains"`
+		Keywords    []string `json:"keywords"`
+		Description string   `json:"description"`
+	}
+
+	// capabilityFromJSON parses the jsonb bytes into a SquadCapabilityResponse.
+	// Returns nil when cap is nil or invalid — callers should treat nil as
+	// "capability not declared".
+	func capabilityFromJSON(squadID pgtype.UUID, squadName string, cap []byte) *SquadCapabilityResponse {
+		if len(cap) == 0 {
+			return nil
+		}
+		var raw struct {
+			Domains     []string `json:"domains"`
+			Keywords    []string `json:"keywords"`
+			Description string   `json:"description"`
+		}
+		if err := json.Unmarshal(cap, &raw); err != nil {
+			return nil
+		}
+		return &SquadCapabilityResponse{
+			SquadID:     uuidToString(squadID),
+			SquadName:   squadName,
+			Domains:     raw.Domains,
+			Keywords:    raw.Keywords,
+			Description: raw.Description,
+		}
+	}
+
+	// GetSquadCapability returns the capability for a squad, or 404 if not declared.
+	func (h *Handler) GetSquadCapability(w http.ResponseWriter, r *http.Request) {
+		squad, _, ok := h.loadSquadInWorkspace(w, r)
+		if !ok {
+			return
+		}
+		cap := capabilityFromJSON(squad.ID, squad.Name, squad.Capability)
+		if cap == nil {
+			writeError(w, http.StatusNotFound, "squad has no declared capability; use `multica squad capability set` to declare one")
+			return
+		}
+		writeJSON(w, http.StatusOK, cap)
+	}
+
+	// SetSquadCapability stores or overwrites a squad's capability declaration.
+	// Requires owner/admin role.
+	func (h *Handler) SetSquadCapability(w http.ResponseWriter, r *http.Request) {
+		workspaceID := workspaceIDFromURL(r, "workspaceId")
+		if _, ok := h.requireWorkspaceRole(w, r, workspaceID, "workspace not found", "owner", "admin"); !ok {
+			return
+		}
+
+		squad, _, ok := h.loadSquadInWorkspace(w, r)
+		if !ok {
+			return
+		}
+
+		var req struct {
+			Domains     []string `json:"domains"`
+			Keywords    []string `json:"keywords"`
+			Description string   `json:"description"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		if len(req.Keywords) == 0 {
+			writeError(w, http.StatusBadRequest, "keywords is required and must be a non-empty array")
+			return
+		}
+
+		domainsJSON, _ := json.Marshal(req.Domains)
+		keywordsJSON, _ := json.Marshal(req.Keywords)
+
+		_, err := h.Queries.SetSquadCapability(r.Context(), db.SetSquadCapabilityParams{
+			ID:          squad.ID,
+			Domains:     domainsJSON,
+			Keywords:    keywordsJSON,
+			Description: req.Description,
+		})
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to set squad capability")
+			return
+		}
+
+		resp := SquadCapabilityResponse{
+			SquadID:     uuidToString(squad.ID),
+			SquadName:   squad.Name,
+			Domains:     req.Domains,
+			Keywords:    req.Keywords,
+			Description: req.Description,
+		}
+		writeJSON(w, http.StatusOK, resp)
+	}
+
+	// DeleteSquadCapability clears a squad's capability declaration.
+	// Requires owner/admin role.
+	func (h *Handler) DeleteSquadCapability(w http.ResponseWriter, r *http.Request) {
+		workspaceID := workspaceIDFromURL(r, "workspaceId")
+		if _, ok := h.requireWorkspaceRole(w, r, workspaceID, "workspace not found", "owner", "admin"); !ok {
+			return
+		}
+
+		squad, _, ok := h.loadSquadInWorkspace(w, r)
+		if !ok {
+			return
+		}
+
+		if _, err := h.Queries.DeleteSquadCapability(r.Context(), squad.ID); err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to delete squad capability")
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}
+
+	// ListSquadCapabilities returns all declared capabilities in the workspace.
+	func (h *Handler) ListSquadCapabilities(w http.ResponseWriter, r *http.Request) {
+		workspaceID := workspaceIDFromURL(r, "workspaceId")
+		wsUUID, ok := parseUUIDOrBadRequest(w, workspaceID, "workspace_id")
+		if !ok {
+			return
+		}
+
+		rows, err := h.Queries.ListSquadCapabilities(r.Context(), wsUUID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to list squad capabilities")
+			return
+		}
+
+		resp := make([]*SquadCapabilityResponse, 0, len(rows))
+		for _, row := range rows {
+			if cap := capabilityFromJSON(row.ID, row.Name, row.Capability); cap != nil {
+				resp = append(resp, cap)
+			}
+		}
+		writeJSON(w, http.StatusOK, resp)
+	}
+
+	// ── Squad Route ─────────────────────────────────────────────────────────────
+
+	// SquadRouteEntry is a single ranked match returned by the route endpoint.
+	type SquadRouteEntry struct {
+		SquadID     string   `json:"squad_id"`
+		SquadName   string   `json:"squad_name"`
+		Score       float64  `json:"score"`
+		Domains     []string `json:"domains"`
+		Keywords    []string `json:"keywords"`
+		Description string   `json:"description"`
+	}
+
+	// SquadRouteResponse is the full route response with ranked matches and
+	// a nudge listing squads that haven't declared capabilities yet.
+	type SquadRouteResponse struct {
+		Matches    []SquadRouteEntry `json:"matches"`
+		Undeclared []string          `json:"undeclared,omitempty"`
+	}
+
+	// tokenize splits a string into lowercase tokens for keyword matching.
+	// Keeps CJK characters as individual tokens so Chinese text decomposes
+	// naturally (e.g. "后端架构" → ["后","端","架","构"]). ASCII tokens are
+	// split on non-letter/non-digit boundaries.
+	func tokenize(s string) []string {
+		runes := []rune(s)
+		tokens := make([]string, 0, len(runes))
+		current := make([]rune, 0)
+		for _, r := range runes {
+			if r >= 0x4E00 && r <= 0x9FFF {
+				// CJK Unified Ideograph: emit as its own token.
+				if len(current) > 0 {
+					tokens = append(tokens, string(current))
+					current = current[:0]
+				}
+				tokens = append(tokens, string(r))
+			} else if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+				current = append(current, r)
+			} else {
+				if len(current) > 0 {
+					tokens = append(tokens, string(current))
+					current = current[:0]
+				}
+			}
+		}
+		if len(current) > 0 {
+			tokens = append(tokens, string(current))
+		}
+		return tokens
+	}
+
+	// computeOverlapScore returns the fraction of squad keywords matched by the
+	// query tokens, plus a domain bonus. Uses the smaller of len(tokens) and
+	// len(keywords) as the denominator so neither a short query nor a short
+	// keyword list is penalized unfairly.
+	func computeOverlapScore(tokens []string, domains []string, keywords []string) float64 {
+		if len(keywords) == 0 || len(tokens) == 0 {
+			return 0
+		}
+
+		// Build a token set for O(1) lookup.
+		tokenSet := make(map[string]struct{}, len(tokens))
+		for _, t := range tokens {
+			tokenSet[t] = struct{}{}
+		}
+
+		// Count keyword matches.
+		matches := 0
+		for _, kw := range keywords {
+			if _, ok := tokenSet[kw]; ok {
+				matches++
+			}
+		}
+
+		// Balanced denominator: min(len(tokens), len(keywords)).
+		denom := float64(len(tokens))
+		if float64(len(keywords)) < denom {
+			denom = float64(len(keywords))
+		}
+		if denom == 0 {
+			return 0
+		}
+		base := float64(matches) / denom
+
+		// Domain bonus: each domain that appears as a token adds 0.25, capped at base.
+		domainHits := 0
+		for _, d := range domains {
+			if _, ok := tokenSet[d]; ok {
+				domainHits++
+			}
+		}
+		bonus := float64(domainHits) * 0.25
+		if bonus > base {
+			bonus = base
+		}
+
+		return base + bonus
+	}
+
+	// RouteSquad accepts a free-text task description and returns squads ranked
+	// by keyword-overlap score against their declared capabilities.
+	func (h *Handler) RouteSquad(w http.ResponseWriter, r *http.Request) {
+		workspaceID := workspaceIDFromURL(r, "workspaceId")
+		wsUUID, ok := parseUUIDOrBadRequest(w, workspaceID, "workspace_id")
+		if !ok {
+			return
+		}
+
+		var req struct {
+			Query string `json:"query"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		if req.Query == "" {
+			writeError(w, http.StatusBadRequest, "query is required")
+			return
+		}
+
+		rows, err := h.Queries.ListSquadCapabilities(r.Context(), wsUUID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to list squad capabilities")
+			return
+		}
+
+		queryTokens := tokenize(req.Query)
+		undeclared := make([]string, 0)
+		entries := make([]SquadRouteEntry, 0, len(rows))
+
+		for _, row := range rows {
+			cap := capabilityFromJSON(row.ID, row.Name, row.Capability)
+			if cap == nil {
+				undeclared = append(undeclared, row.Name)
+				continue
+			}
+			score := computeOverlapScore(queryTokens, cap.Domains, cap.Keywords)
+			entries = append(entries, SquadRouteEntry{
+				SquadID:     cap.SquadID,
+				SquadName:   cap.SquadName,
+				Score:       score,
+				Domains:     cap.Domains,
+				Keywords:    cap.Keywords,
+				Description: cap.Description,
+			})
+		}
+
+		// Sort descending by score, then ascending by name for stable output.
+		sort.Slice(entries, func(i, j int) bool {
+			if entries[i].Score != entries[j].Score {
+				return entries[i].Score > entries[j].Score
+			}
+			return entries[i].SquadName < entries[j].SquadName
+		})
+
+		resp := SquadRouteResponse{
+			Matches:    entries,
+			Undeclared: undeclared,
+		}
+		writeJSON(w, http.StatusOK, resp)
+	}
 
 // RecordSquadLeaderEvaluation records a squad leader's evaluation decision
 // into the unified activity_log. Called by the leader agent via CLI after

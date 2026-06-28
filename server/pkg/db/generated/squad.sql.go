@@ -46,7 +46,7 @@ func (q *Queries) AddSquadMember(ctx context.Context, arg AddSquadMemberParams) 
 const archiveSquad = `-- name: ArchiveSquad :one
 UPDATE squad SET archived_at = now(), archived_by = $2, updated_at = now()
 WHERE id = $1
-RETURNING id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions
+RETURNING id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions, capability
 `
 
 type ArchiveSquadParams struct {
@@ -70,6 +70,7 @@ func (q *Queries) ArchiveSquad(ctx context.Context, arg ArchiveSquadParams) (Squ
 		&i.ArchivedBy,
 		&i.AvatarUrl,
 		&i.Instructions,
+		&i.Capability,
 	)
 	return i, err
 }
@@ -88,7 +89,7 @@ func (q *Queries) CountSquadMembers(ctx context.Context, squadID pgtype.UUID) (i
 const createSquad = `-- name: CreateSquad :one
 INSERT INTO squad (workspace_id, name, description, leader_id, creator_id, avatar_url)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions
+RETURNING id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions, capability
 `
 
 type CreateSquadParams struct {
@@ -123,12 +124,28 @@ func (q *Queries) CreateSquad(ctx context.Context, arg CreateSquadParams) (Squad
 		&i.ArchivedBy,
 		&i.AvatarUrl,
 		&i.Instructions,
+		&i.Capability,
 	)
 	return i, err
 }
 
+const deleteSquadCapability = `-- name: DeleteSquadCapability :one
+UPDATE squad SET capability = NULL, updated_at = now()
+WHERE id = $1
+RETURNING id
+`
+
+// Clears the capability field. Returns the squad row so callers can confirm
+// the squad exists and is in the current workspace.
+func (q *Queries) DeleteSquadCapability(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, deleteSquadCapability, id)
+	var id_2 pgtype.UUID
+	err := row.Scan(&id_2)
+	return id_2, err
+}
+
 const getSquad = `-- name: GetSquad :one
-SELECT id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions FROM squad WHERE id = $1
+SELECT id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions, capability FROM squad WHERE id = $1
 `
 
 func (q *Queries) GetSquad(ctx context.Context, id pgtype.UUID) (Squad, error) {
@@ -147,12 +164,13 @@ func (q *Queries) GetSquad(ctx context.Context, id pgtype.UUID) (Squad, error) {
 		&i.ArchivedBy,
 		&i.AvatarUrl,
 		&i.Instructions,
+		&i.Capability,
 	)
 	return i, err
 }
 
 const getSquadByAssignee = `-- name: GetSquadByAssignee :one
-SELECT s.id, s.workspace_id, s.name, s.description, s.leader_id, s.creator_id, s.created_at, s.updated_at, s.archived_at, s.archived_by, s.avatar_url, s.instructions FROM squad s WHERE s.id = $1 AND s.workspace_id = $2
+SELECT s.id, s.workspace_id, s.name, s.description, s.leader_id, s.creator_id, s.created_at, s.updated_at, s.archived_at, s.archived_by, s.avatar_url, s.instructions, s.capability FROM squad s WHERE s.id = $1 AND s.workspace_id = $2
 `
 
 type GetSquadByAssigneeParams struct {
@@ -177,12 +195,25 @@ func (q *Queries) GetSquadByAssignee(ctx context.Context, arg GetSquadByAssignee
 		&i.ArchivedBy,
 		&i.AvatarUrl,
 		&i.Instructions,
+		&i.Capability,
 	)
 	return i, err
 }
 
+const getSquadCapability = `-- name: GetSquadCapability :one
+SELECT capability FROM squad WHERE id = $1
+`
+
+// Returns the capability JSON for a single squad. NULL means undeclared.
+func (q *Queries) GetSquadCapability(ctx context.Context, id pgtype.UUID) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getSquadCapability, id)
+	var capability []byte
+	err := row.Scan(&capability)
+	return capability, err
+}
+
 const getSquadInWorkspace = `-- name: GetSquadInWorkspace :one
-SELECT id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions FROM squad WHERE id = $1 AND workspace_id = $2
+SELECT id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions, capability FROM squad WHERE id = $1 AND workspace_id = $2
 `
 
 type GetSquadInWorkspaceParams struct {
@@ -206,6 +237,7 @@ func (q *Queries) GetSquadInWorkspace(ctx context.Context, arg GetSquadInWorkspa
 		&i.ArchivedBy,
 		&i.AvatarUrl,
 		&i.Instructions,
+		&i.Capability,
 	)
 	return i, err
 }
@@ -231,7 +263,7 @@ func (q *Queries) IsSquadMember(ctx context.Context, arg IsSquadMemberParams) (b
 }
 
 const listAllSquads = `-- name: ListAllSquads :many
-SELECT id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions FROM squad WHERE workspace_id = $1 ORDER BY created_at ASC
+SELECT id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions, capability FROM squad WHERE workspace_id = $1 ORDER BY created_at ASC
 `
 
 func (q *Queries) ListAllSquads(ctx context.Context, workspaceID pgtype.UUID) ([]Squad, error) {
@@ -256,6 +288,53 @@ func (q *Queries) ListAllSquads(ctx context.Context, workspaceID pgtype.UUID) ([
 			&i.ArchivedBy,
 			&i.AvatarUrl,
 			&i.Instructions,
+			&i.Capability,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSquadCapabilities = `-- name: ListSquadCapabilities :many
+SELECT
+    s.id,
+    s.name,
+    s.description,
+    s.capability
+FROM squad s
+WHERE s.workspace_id = $1 AND s.archived_at IS NULL
+ORDER BY s.name ASC
+`
+
+type ListSquadCapabilitiesRow struct {
+	ID          pgtype.UUID `json:"id"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	Capability  []byte      `json:"capability"`
+}
+
+// Lists all non-archived squads with their capability (if declared) and basic
+// identity columns. Used by `squad route` to compute keyword-overlap scores in
+// Go without a separate squad-list round-trip.
+func (q *Queries) ListSquadCapabilities(ctx context.Context, workspaceID pgtype.UUID) ([]ListSquadCapabilitiesRow, error) {
+	rows, err := q.db.Query(ctx, listSquadCapabilities, workspaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListSquadCapabilitiesRow{}
+	for rows.Next() {
+		var i ListSquadCapabilitiesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Capability,
 		); err != nil {
 			return nil, err
 		}
@@ -480,7 +559,7 @@ func (q *Queries) ListSquadMembers(ctx context.Context, squadID pgtype.UUID) ([]
 }
 
 const listSquads = `-- name: ListSquads :many
-SELECT id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions FROM squad WHERE workspace_id = $1 AND archived_at IS NULL ORDER BY created_at ASC
+SELECT id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions, capability FROM squad WHERE workspace_id = $1 AND archived_at IS NULL ORDER BY created_at ASC
 `
 
 func (q *Queries) ListSquads(ctx context.Context, workspaceID pgtype.UUID) ([]Squad, error) {
@@ -505,6 +584,7 @@ func (q *Queries) ListSquads(ctx context.Context, workspaceID pgtype.UUID) ([]Sq
 			&i.ArchivedBy,
 			&i.AvatarUrl,
 			&i.Instructions,
+			&i.Capability,
 		); err != nil {
 			return nil, err
 		}
@@ -517,7 +597,7 @@ func (q *Queries) ListSquads(ctx context.Context, workspaceID pgtype.UUID) ([]Sq
 }
 
 const listSquadsByMember = `-- name: ListSquadsByMember :many
-SELECT s.id, s.workspace_id, s.name, s.description, s.leader_id, s.creator_id, s.created_at, s.updated_at, s.archived_at, s.archived_by, s.avatar_url, s.instructions FROM squad s
+SELECT s.id, s.workspace_id, s.name, s.description, s.leader_id, s.creator_id, s.created_at, s.updated_at, s.archived_at, s.archived_by, s.avatar_url, s.instructions, s.capability FROM squad s
 JOIN squad_member sm ON sm.squad_id = s.id
 WHERE s.workspace_id = $1 AND sm.member_type = $2 AND sm.member_id = $3
 ORDER BY s.created_at ASC
@@ -552,6 +632,7 @@ func (q *Queries) ListSquadsByMember(ctx context.Context, arg ListSquadsByMember
 			&i.ArchivedBy,
 			&i.AvatarUrl,
 			&i.Instructions,
+			&i.Capability,
 		); err != nil {
 			return nil, err
 		}
@@ -580,6 +661,40 @@ func (q *Queries) RemoveSquadMember(ctx context.Context, arg RemoveSquadMemberPa
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const setSquadCapability = `-- name: SetSquadCapability :one
+UPDATE squad SET
+    capability = jsonb_build_object(
+        'domains',    $2::jsonb,
+        'keywords',   $3::jsonb,
+        'description', $4::text::jsonb
+    ),
+    updated_at = now()
+WHERE id = $1
+RETURNING capability
+`
+
+type SetSquadCapabilityParams struct {
+	ID          pgtype.UUID `json:"id"`
+	Domains     []byte      `json:"domains"`
+	Keywords    []byte      `json:"keywords"`
+	Description string      `json:"description"`
+}
+
+// Stores (or overwrites) the capability JSON for a squad. Uses jsonb_build_object
+// so callers pass primitive scalars and let Postgres assemble the JSON — that way
+// sqlc generates typed Go parameters instead of a raw []byte.
+func (q *Queries) SetSquadCapability(ctx context.Context, arg SetSquadCapabilityParams) ([]byte, error) {
+	row := q.db.QueryRow(ctx, setSquadCapability,
+		arg.ID,
+		arg.Domains,
+		arg.Keywords,
+		arg.Description,
+	)
+	var capability []byte
+	err := row.Scan(&capability)
+	return capability, err
 }
 
 const transferSquadAssignees = `-- name: TransferSquadAssignees :exec
@@ -631,7 +746,7 @@ UPDATE squad SET
     instructions = COALESCE($6, instructions),
     updated_at = now()
 WHERE id = $1
-RETURNING id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions
+RETURNING id, workspace_id, name, description, leader_id, creator_id, created_at, updated_at, archived_at, archived_by, avatar_url, instructions, capability
 `
 
 type UpdateSquadParams struct {
@@ -666,6 +781,7 @@ func (q *Queries) UpdateSquad(ctx context.Context, arg UpdateSquadParams) (Squad
 		&i.ArchivedBy,
 		&i.AvatarUrl,
 		&i.Instructions,
+		&i.Capability,
 	)
 	return i, err
 }

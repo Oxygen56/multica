@@ -118,3 +118,39 @@ export interface SquadMemberStatus {
 export interface SquadMemberStatusListResponse {
   members: SquadMemberStatus[];
 }
+
+// ── Squad Capability ─────────────────────────────────────────────────────────
+
+export interface SquadCapability {
+  squad_id: string;
+  squad_name: string;
+  domains: string[];
+  keywords: string[];
+  description: string;
+}
+
+export interface SetSquadCapabilityRequest {
+  domains: string[];
+  keywords: string[];
+  description?: string;
+}
+
+// ── Squad Route ──────────────────────────────────────────────────────────────
+
+export interface SquadRouteEntry {
+  squad_id: string;
+  squad_name: string;
+  score: number;
+  domains: string[];
+  keywords: string[];
+  description: string;
+}
+
+export interface SquadRouteResponse {
+  matches: SquadRouteEntry[];
+  undeclared?: string[];
+}
+
+export interface SquadRouteRequest {
+  query: string;
+}
