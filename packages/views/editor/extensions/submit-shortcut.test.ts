@@ -25,7 +25,7 @@ describe("createSubmitExtension", () => {
     isActive: () => false,
   } as Partial<Editor>;
 
-  it("Mod-Enter always submits", () => {
+  it("Mod-Enter submits when submitOnEnter is false", () => {
     const onSubmit = vi.fn(() => true);
     const shortcuts = getShortcuts(
       createSubmitExtension(onSubmit, { submitOnEnter: false }),
@@ -108,6 +108,18 @@ describe("createSubmitExtension", () => {
     expect(shortcuts["Shift-Enter"]).toBeDefined();
     // Returning false tells ProseMirror "not handled" → default newline behavior
     expect(shortcuts["Shift-Enter"]!()).toBe(false);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("Mod-Enter lets default newline through when submitOnEnter is true", () => {
+    const onSubmit = vi.fn(() => true);
+    const shortcuts = getShortcuts(
+      createSubmitExtension(onSubmit, { submitOnEnter: true }),
+      baseEditor,
+    );
+
+    expect(shortcuts["Mod-Enter"]).toBeDefined();
+    expect(shortcuts["Mod-Enter"]!()).toBe(false);
     expect(onSubmit).not.toHaveBeenCalled();
   });
 });
