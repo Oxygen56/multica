@@ -22,6 +22,7 @@ import { IssuesHeader } from "./issues-header";
 import { BoardView } from "./board-view";
 import { ListView } from "./list-view";
 import { SwimLaneView } from "./swimlane-view";
+import { TreeView } from "./tree-view";
 import { BatchActionToolbar } from "./batch-action-toolbar";
 import type { ChildProgress } from "./list-row";
 import { useT } from "../../i18n";
@@ -283,6 +284,8 @@ export function IssuesPage() {
                 childProgressMap={childProgressMap}
                 sort={queryParams}
               />
+            ) : viewMode === "tree" ? (
+              <TreeView issues={issues} childProgressMap={childProgressMap} />
             ) : (
               <ListView issues={issues} visibleStatuses={visibleStatuses} childProgressMap={childProgressMap} sort={queryParams} onMoveIssue={handleMoveIssue} />
             )}

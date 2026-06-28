@@ -12,6 +12,7 @@ import {
   Filter,
   FolderKanban,
   FolderMinus,
+  GitBranch,
   List,
   SignalHigh,
   SlidersHorizontal,
@@ -1254,6 +1255,8 @@ export function IssueDisplayControls({
                           <Waves className="size-3.5" />
                         ) : viewMode === "gantt" && allowGantt ? (
                           <ChartGantt className="size-3.5" />
+                        ) : viewMode === "tree" ? (
+                          <GitBranch className="size-3.5" />
                         ) : (
                           <List className="size-3.5" />
                         )}
@@ -1264,6 +1267,8 @@ export function IssueDisplayControls({
                             ? t(($) => $.view.swimlane)
                             : viewMode === "gantt" && allowGantt
                             ? t(($) => $.view.gantt)
+                            : viewMode === "tree"
+                            ? t(($) => $.view.tree)
                             : t(($) => $.view.list)}
                         </span>
                       </Button>
@@ -1278,6 +1283,8 @@ export function IssueDisplayControls({
                   ? t(($) => $.view.tooltip_swimlane)
                   : viewMode === "gantt" && allowGantt
                   ? t(($) => $.view.tooltip_gantt)
+                  : viewMode === "tree"
+                  ? t(($) => $.view.tooltip_tree)
                   : t(($) => $.view.tooltip_list)}
               </TooltipContent>
             </Tooltip>
@@ -1297,6 +1304,10 @@ export function IssueDisplayControls({
                 <DropdownMenuRadioItem value="swimlane">
                   <Waves />
                   {t(($) => $.view.swimlane)}
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="tree">
+                  <GitBranch />
+                  {t(($) => $.view.tree)}
                 </DropdownMenuRadioItem>
                 {allowGantt && (
                   <DropdownMenuRadioItem value="gantt">
