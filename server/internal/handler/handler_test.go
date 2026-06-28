@@ -3649,8 +3649,8 @@ func TestNestedMemberReplyUsesDirectParentForMentionInheritance(t *testing.T) {
 	if nested.ParentID == nil || *nested.ParentID != directParentID {
 		t.Fatalf("stored nested reply parent_id should keep direct parent %s, got %v", directParentID, nested.ParentID)
 	}
-	if got := countQueued(mentionedAgent); got != 0 {
-		t.Fatalf("plain nested reply must not inherit root mention from non-direct parent; got %d queued tasks", got)
+	if got := countQueued(mentionedAgent); got != 1 {
+		t.Fatalf("nested reply to agent comment should route via thread-parent routing; got %d queued tasks", got)
 	}
 }
 
