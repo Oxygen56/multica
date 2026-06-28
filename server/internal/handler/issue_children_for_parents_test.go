@@ -221,7 +221,9 @@ func TestListChildrenByParents_IgnoresForeignWorkspaceParents(t *testing.T) {
 // createChildIssue creates an issue via the handler under testWorkspaceID and
 // returns the decoded response. A nanosecond timestamp keeps titles unique
 // across repeated runs against the shared test database.
-func createChildIssue(t *testing.T, title, status, parentID string) IssueResponse {
+// When parentID is non-empty the issue is created with assigneeID as the
+// assignee because the platform requires child issues to have an assignee.
+func createChildIssue(t *testing.T, title, status, parentID, assigneeID string) IssueResponse {
 	t.Helper()
 	w := httptest.NewRecorder()
 	body := map[string]any{
@@ -230,6 +232,10 @@ func createChildIssue(t *testing.T, title, status, parentID string) IssueRespons
 	}
 	if parentID != "" {
 		body["parent_issue_id"] = parentID
+	}
+	if assigneeID != "" {
+		body["assignee_type"] = "agent"
+		body["assignee_id"] = assigneeID
 	}
 	req := newRequest("POST", "/api/issues?workspace_id="+testWorkspaceID, body)
 	testHandler.CreateIssue(w, req)
@@ -254,11 +260,14 @@ func createChildIssue(t *testing.T, title, status, parentID string) IssueRespons
 func newScrambledChildren(t *testing.T) (IssueResponse, []IssueResponse) {
 	t.Helper()
 
-	parent := createChildIssue(t, "ordering parent", "in_progress", "")
-	c1 := createChildIssue(t, "ordering c1", "todo", parent.ID)
-	c2 := createChildIssue(t, "ordering c2", "in_progress", parent.ID)
-	c3 := createChildIssue(t, "ordering c3", "done", parent.ID)
-	c4 := createChildIssue(t, "ordering c4", "todo", parent.ID)
+	// Child issues require an assignee — create one test agent for all children.
+	childAgentID := createHandlerTestAgent(t, "ordering-child-agent", nil)
+
+	parent := createChildIssue(t, "ordering parent", "in_progress", "", "")
+	c1 := createChildIssue(t, "ordering c1", "todo", parent.ID, childAgentID)
+	c2 := createChildIssue(t, "ordering c2", "in_progress", parent.ID, childAgentID)
+	c3 := createChildIssue(t, "ordering c3", "done", parent.ID, childAgentID)
+	c4 := createChildIssue(t, "ordering c4", "todo", parent.ID, childAgentID)
 	children := []IssueResponse{c1, c2, c3, c4}
 
 	t.Cleanup(func() {
