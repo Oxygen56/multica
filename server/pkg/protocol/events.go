@@ -134,4 +134,11 @@ const (
 	// deleting the row; the audit trail is preserved.
 	EventLarkInstallationCreated = "lark_installation:created"
 	EventLarkInstallationRevoked = "lark_installation:revoked"
+
+	// Notification bus events (Feature #4596)
+	EventIssueChildTerminal  = "issue:child_terminal"  // synthesized: child enters done/cancelled
+	EventIssueStageCompleted = "issue:stage_completed"  // synthesized: all children in a stage terminal
+	EventIssueBlocked        = "issue:blocked"          // synthesized: enters blocked status
+	EventIssueUnblocked      = "issue:unblocked"        // synthesized: leaves blocked status
+	EventIssueDeadlockDetected = "issue:deadlock_detected" // synthesized: parent deadlock detected
 )

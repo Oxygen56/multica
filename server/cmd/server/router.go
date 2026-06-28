@@ -827,6 +827,24 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 			// Task messages (user-facing, not daemon auth)
 			r.Get("/api/tasks/{taskId}/messages", h.ListTaskMessagesByUser)
 
+			// Dispatch contracts (Feature #4596)
+			r.Route("/api/dispatch", func(r chi.Router) {
+				r.Post("/", h.CreateDispatchContract)
+				r.Get("/", h.ListDispatchContracts)
+				r.Route("/{contractId}", func(r chi.Router) {
+					r.Get("/", h.GetDispatchContract)
+					r.Post("/cancel", h.CancelDispatchContract)
+				})
+			})
+
+			// Notification queries (Feature #4596)
+			r.Route("/api/notifications", func(r chi.Router) {
+				r.Get("/pending", h.ListPendingNotifications)
+				r.Route("/{id}", func(r chi.Router) {
+					r.Post("/acknowledge", h.AcknowledgeNotification)
+				})
+			})
+
 			// Labels
 			r.Route("/api/labels", func(r chi.Router) {
 				r.Get("/", h.ListLabels)

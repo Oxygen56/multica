@@ -281,6 +281,12 @@ func main() {
 	registerActivityListeners(bus, queries)
 	registerNotificationListeners(bus, queries)
 
+	// Feature #4596: Cross-squad notification bus.
+	// Derives synthesized events (child_terminal, blocked, unblocked) from
+	// base issue:updated events so notification rules and anomaly detectors
+	// can react without polling.
+	events.DeriveSynthesizedEvents(bus)
+
 	metricsConfig := obsmetrics.ConfigFromEnv()
 	var metricsServer *http.Server
 	var httpMetrics *obsmetrics.HTTPMetrics
