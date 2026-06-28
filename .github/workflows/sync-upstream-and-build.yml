@@ -10,6 +10,11 @@ on:
         description: "Skip upstream sync (build from current HEAD)"
         type: boolean
         default: false
+  # Auto-trigger when CI passes on main — no manual step needed.
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
 
 env:
   REGISTRY: ghcr.io
@@ -19,7 +24,11 @@ jobs:
   # ── Job 1: Sync from upstream ──────────────────────────────────────────
   sync-upstream:
     runs-on: ubuntu-latest
-    if: ${{ !inputs.skip_sync }}
+    # Skip when triggered by workflow_run (CI already ran on latest) or
+    # when the user chose to skip sync via workflow_dispatch.
+    if: |
+      github.event_name != 'workflow_run' &&
+      (github.event_name != 'workflow_dispatch' || !inputs.skip_sync)
     permissions:
       contents: write
     outputs:
@@ -61,10 +70,18 @@ jobs:
   # ── Job 2: Build & push Docker images ──────────────────────────────────
   build-push:
     needs: sync-upstream
-    # Always build on workflow_dispatch; on schedule, only if sync happened
+    # Build when:
+    #   - workflow_dispatch (manual trigger)
+    #   - workflow_run with CI success
+    #   - schedule with upstream changes
     if: |
       always() &&
-      (github.event_name == 'workflow_dispatch' || needs.sync-upstream.result == 'skipped' || needs.sync-upstream.outputs.synced == 'true')
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+        needs.sync-upstream.result == 'skipped' ||
+        needs.sync-upstream.outputs.synced == 'true'
+      )
     runs-on: ubuntu-latest
     strategy:
       matrix:
