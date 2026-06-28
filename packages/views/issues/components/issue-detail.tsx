@@ -744,6 +744,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
   const [propertiesOpen, setPropertiesOpen] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [parentIssueOpen, setParentIssueOpen] = useState(true);
+  const [subIssuesSidebarOpen, setSubIssuesSidebarOpen] = useState(true);
   const [pullRequestsOpen, setPullRequestsOpen] = useState(true);
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [tokenUsageOpen, setTokenUsageOpen] = useState(true);
@@ -1596,6 +1597,48 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
           </div>}
         </div>
       )}
+
+      {/* Sub-issues — collapsible sidebar list of child issues. Only renders
+          when child issues exist. Shows progress count (done/total) in the
+          header, and each row links to the child issue detail page. Reuses
+          existing `childIssues` data — no extra network requests. */}
+      {childIssues.length > 0 && (() => {
+        const sidebarDoneCount = childIssues.filter((c) => c.status === "done").length;
+        return (
+          <div>
+            <button
+              type="button"
+              className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors mb-2 hover:bg-accent/70 ${subIssuesSidebarOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
+              onClick={() => setSubIssuesSidebarOpen(!subIssuesSidebarOpen)}
+            >
+              <ChevronRight className={`!size-3 shrink-0 stroke-[2.5] text-muted-foreground transition-transform ${subIssuesSidebarOpen ? "rotate-90" : ""}`} />
+              {t(($) => $.detail.section_sub_issues)}
+              <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-2 py-0.5">
+                <ProgressRing done={sidebarDoneCount} total={childIssues.length} size={11} />
+                <span className="text-[11px] text-muted-foreground tabular-nums font-medium">
+                  {sidebarDoneCount}/{childIssues.length}
+                </span>
+              </span>
+            </button>
+            {subIssuesSidebarOpen && (
+              <div className="pl-2">
+                {childIssues.map((child) => (
+                  <div key={child.id} className="flex items-center gap-0.5 rounded-md px-2 -mx-2 hover:bg-accent/50 transition-colors group">
+                    <AppLink
+                      href={paths.issueDetail(child.id)}
+                      className="flex flex-1 min-w-0 items-center gap-1.5 py-1.5 text-xs"
+                    >
+                      <StatusIcon status={child.status} className="h-3.5 w-3.5 shrink-0" />
+                      <span className="text-muted-foreground shrink-0">{child.identifier}</span>
+                      <span className="truncate group-hover:text-foreground">{child.title}</span>
+                    </AppLink>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Pull requests — hidden when the workspace disables the PR sidebar
           (or the GitHub master switch is off). Backend data is kept either
