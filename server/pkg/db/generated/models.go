@@ -910,3 +910,42 @@ type WorkspaceInvitation struct {
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 	ExpiresAt     pgtype.Timestamptz `json:"expires_at"`
 }
+
+// -- Feature #4596: Cross-Squad Notification System models --
+
+type DispatchContract struct {
+	ID            pgtype.UUID        `json:"id"`
+	WorkspaceID   pgtype.UUID        `json:"workspace_id"`
+	FromIssueID   pgtype.UUID        `json:"from_issue_id"`
+	ToIssueID     pgtype.UUID        `json:"to_issue_id"`
+	TriggerEvents []string           `json:"trigger_events"`
+	TargetIssue   pgtype.UUID        `json:"target_issue"`
+	Status        string             `json:"status"`
+	Metadata      []byte             `json:"metadata"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	FulfilledAt   pgtype.Timestamptz `json:"fulfilled_at"`
+	CancelledAt   pgtype.Timestamptz `json:"cancelled_at"`
+}
+
+type EventLog struct {
+	ID          int64              `json:"id"`
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	EventType   string             `json:"event_type"`
+	EventData   []byte             `json:"event_data"`
+	SequenceNum int64              `json:"sequence_num"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type NotificationRecord struct {
+	ID               pgtype.UUID        `json:"id"`
+	WorkspaceID      pgtype.UUID        `json:"workspace_id"`
+	NotificationType string             `json:"notification_type"`
+	SourceIssueID    pgtype.UUID        `json:"source_issue_id"`
+	TargetIssueID    pgtype.UUID        `json:"target_issue_id"`
+	RuleID           pgtype.Text        `json:"rule_id"`
+	Status           string             `json:"status"`
+	Details          []byte             `json:"details"`
+	AcknowledgedAt   pgtype.Timestamptz `json:"acknowledged_at"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
