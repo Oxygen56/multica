@@ -14,7 +14,7 @@ export function LabelsPage() {
   return (
     <div className="flex flex-col h-full">
       <PageHeader>
-        <h1 className="text-sm font-medium">{t("page.title")}</h1>
+        <h1 className="text-sm font-medium">{t(($) => $.page.title)}</h1>
       </PageHeader>
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-2xl">
