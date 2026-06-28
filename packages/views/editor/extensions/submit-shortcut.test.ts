@@ -87,4 +87,27 @@ describe("createSubmitExtension", () => {
     expect(shortcuts.Enter!()).toBe(false);
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  it("Shift-Enter is not bound when submitOnEnter is false", () => {
+    const onSubmit = vi.fn(() => true);
+    const shortcuts = getShortcuts(
+      createSubmitExtension(onSubmit, { submitOnEnter: false }),
+      baseEditor,
+    );
+
+    expect(shortcuts["Shift-Enter"]).toBeUndefined();
+  });
+
+  it("Shift-Enter lets default newline through when submitOnEnter is true", () => {
+    const onSubmit = vi.fn(() => true);
+    const shortcuts = getShortcuts(
+      createSubmitExtension(onSubmit, { submitOnEnter: true }),
+      baseEditor,
+    );
+
+    expect(shortcuts["Shift-Enter"]).toBeDefined();
+    // Returning false tells ProseMirror "not handled" → default newline behavior
+    expect(shortcuts["Shift-Enter"]!()).toBe(false);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });
