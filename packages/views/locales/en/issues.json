@@ -97,11 +97,13 @@
     "tooltip_list": "List view",
     "tooltip_gantt": "Gantt view",
     "tooltip_swimlane": "Swimlane view",
+    "tooltip_tree": "Tree view",
     "section": "View",
     "board": "Board",
     "list": "List",
     "gantt": "Gantt",
-    "swimlane": "Swimlane"
+    "swimlane": "Swimlane",
+    "tree": "Tree"
   },
   "gantt": {
     "header_issue": "Issue",
@@ -170,6 +172,7 @@
     "add_sub_issue_aria": "Add sub-issue",
     "section_properties": "Properties",
     "section_parent_issue": "Parent issue",
+    "section_sub_issues": "Sub-issues",
     "section_pull_requests": "Pull requests",
     "section_metadata": "Metadata",
     "section_details": "Details",
@@ -234,7 +237,10 @@
     "link_copy_failed": "Failed to copy link",
     "workdir_path_copied": "Workdir path copied",
     "workdir_path_copy_failed": "Failed to copy workdir path",
-    "workdir_path_unavailable": "No local workdir yet — issue has not been run by a local agent"
+    "workdir_path_unavailable": "No local workdir yet — issue has not been run by a local agent",
+    "desc_show_less": "Show less",
+    "desc_show_more": "Show more",
+    "jump_to_latest": "Jump to latest"
   },
   "timeline": {
     "loading": "Loading..."

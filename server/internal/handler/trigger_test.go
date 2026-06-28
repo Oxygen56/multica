@@ -58,9 +58,9 @@ func TestCommentMentionsOthersButNotAssignee(t *testing.T) {
 			want:    false,
 		},
 		{
-			name:    "mentions assignee → allow trigger",
+			name:    "mentions assignee → suppress (mention path handles it)",
 			content: fmt.Sprintf("[@Agent](mention://agent/%s) please fix", agentAssigneeID),
-			want:    false,
+			want:    true,
 		},
 		{
 			name:    "mentions other agent only → suppress",
@@ -73,9 +73,9 @@ func TestCommentMentionsOthersButNotAssignee(t *testing.T) {
 			want:    true,
 		},
 		{
-			name:    "mentions both assignee and other → allow trigger",
+			name:    "mentions both assignee and other → suppress (mention path handles both)",
 			content: fmt.Sprintf("[@Agent](mention://agent/%s) and [@Other](mention://agent/%s)", agentAssigneeID, otherAgentID),
-			want:    false,
+			want:    true,
 		},
 		{
 			name:    "@all mention → suppress (broadcast, not directed at agent)",
@@ -292,14 +292,14 @@ func TestOnCommentTriggerDecision(t *testing.T) {
 		want    bool
 	}{
 		{"top-level, no mention", nil, "hello agent", true},
-		{"top-level, mention assignee", nil, fmt.Sprintf("[@Agent](mention://agent/%s) fix this", agentAssigneeID), true},
+		{"top-level, mention assignee", nil, fmt.Sprintf("[@Agent](mention://agent/%s) fix this", agentAssigneeID), false},
 		{"top-level, mention other only", nil, fmt.Sprintf("[@Other](mention://agent/%s) look", otherAgentID), false},
 		{"reply agent thread, no mention", agentParent, "got it", true},
 		{"reply agent thread, mention other member", agentParent, fmt.Sprintf("[@Bob](mention://member/%s) ?", memberID), false},
-		{"reply agent thread, mention assignee", agentParent, fmt.Sprintf("[@Agent](mention://agent/%s) yes", agentAssigneeID), true},
+		{"reply agent thread, mention assignee", agentParent, fmt.Sprintf("[@Agent](mention://agent/%s) yes", agentAssigneeID), false},
 		{"reply member thread, no mention", memberParent, "agreed", false},
 		{"reply member thread, mention other member", memberParent, fmt.Sprintf("[@Bob](mention://member/%s) ok", memberID), false},
-		{"reply member thread, mention assignee", memberParent, fmt.Sprintf("[@Agent](mention://agent/%s) help", agentAssigneeID), true},
+		{"reply member thread, mention assignee", memberParent, fmt.Sprintf("[@Agent](mention://agent/%s) help", agentAssigneeID), false},
 		{"reply member thread that @mentioned assignee, no re-mention", memberParentMentioningAssignee, "here is more info", true},
 		{"top-level, @all broadcast", nil, "[@All](mention://all/all) heads up team", false},
 		{"reply agent thread, @all broadcast", agentParent, "[@All](mention://all/all) update for everyone", false},

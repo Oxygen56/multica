@@ -95,11 +95,13 @@
     "tooltip_list": "リスト表示",
     "tooltip_gantt": "ガント表示",
     "tooltip_swimlane": "スイムレーン表示",
+    "tooltip_tree": "ツリー表示",
     "section": "表示",
     "board": "ボード",
     "list": "リスト",
     "gantt": "ガント",
-    "swimlane": "スイムレーン"
+    "swimlane": "スイムレーン",
+    "tree": "ツリー"
   },
   "gantt": {
     "header_issue": "イシュー",
@@ -231,7 +233,10 @@
     "link_copy_failed": "リンクをコピーできませんでした",
     "workdir_path_copied": "作業ディレクトリのパスをコピーしました",
     "workdir_path_copy_failed": "作業ディレクトリのパスをコピーできませんでした",
-    "workdir_path_unavailable": "まだローカルの作業ディレクトリがありません。ローカルエージェントがこのイシューを実行していません"
+    "workdir_path_unavailable": "まだローカルの作業ディレクトリがありません。ローカルエージェントがこのイシューを実行していません",
+    "desc_show_less": "閉じる",
+    "desc_show_more": "もっと見る",
+    "jump_to_latest": "最新にジャンプ"
   },
   "timeline": {
     "loading": "読み込み中..."

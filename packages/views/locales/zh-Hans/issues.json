@@ -95,11 +95,13 @@
     "tooltip_list": "列表视图",
     "tooltip_gantt": "甘特图",
     "tooltip_swimlane": "泳道视图",
+    "tooltip_tree": "树状视图",
     "section": "视图",
     "board": "看板",
     "list": "列表",
     "gantt": "甘特图",
-    "swimlane": "泳道"
+    "swimlane": "泳道",
+    "tree": "树状"
   },
   "gantt": {
     "header_issue": "Issue",
@@ -168,6 +170,7 @@
     "add_sub_issue_aria": "添加子 issue",
     "section_properties": "属性",
     "section_parent_issue": "父 issue",
+    "section_sub_issues": "子 issue",
     "section_pull_requests": "Pull Request",
     "section_metadata": "元数据",
     "section_details": "详情",
@@ -232,7 +235,10 @@
     "link_copy_failed": "复制链接失败",
     "workdir_path_copied": "已复制本地 workdir 路径",
     "workdir_path_copy_failed": "复制本地 workdir 路径失败",
-    "workdir_path_unavailable": "暂无本地 workdir — 这个 issue 还没被本地 agent 运行过"
+    "workdir_path_unavailable": "暂无本地 workdir — 这个 issue 还没被本地 agent 运行过",
+    "desc_show_less": "收起",
+    "desc_show_more": "展开更多",
+    "jump_to_latest": "跳到最新"
   },
   "timeline": {
     "loading": "加载中…"

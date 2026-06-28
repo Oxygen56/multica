@@ -2152,6 +2152,16 @@ func (h *Handler) CreateIssue(w http.ResponseWriter, r *http.Request) {
 		}
 		parentIssueID = id
 	}
+	// Validation: child issue must have an assignee.
+	if parentIssueID.Valid && !assigneeID.Valid {
+		writeError(w, http.StatusBadRequest, "child issue must have an assignee")
+		return
+	}
+	// Validation: child issue cannot be set to in_review.
+	if parentIssueID.Valid && status == "in_review" {
+		writeError(w, http.StatusBadRequest, "child issues cannot be set to in_review")
+		return
+	}
 	// Cross-workspace parent / project existence is enforced inside
 	// IssueService.Create (atomically with the create), so every entry
 	// point — HTTP, Lark, future MCP — gets the same boundary check
@@ -2377,6 +2387,11 @@ func (h *Handler) UpdateIssue(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Status != nil {
 		if !validateIssueEnum(w, "status", *req.Status, validIssueStatuses) {
+			return
+		}
+		// Validation: child issue cannot be set to in_review.
+		if prevIssue.ParentIssueID.Valid && *req.Status == "in_review" {
+			writeError(w, http.StatusBadRequest, "child issues cannot be set to in_review")
 			return
 		}
 		params.Status = pgtype.Text{String: *req.Status, Valid: true}
@@ -2925,6 +2940,10 @@ func (h *Handler) BatchUpdateIssues(w http.ResponseWriter, r *http.Request) {
 			params.Description = pgtype.Text{String: *req.Updates.Description, Valid: true}
 		}
 		if req.Updates.Status != nil {
+			// Validation: child issue cannot be set to in_review.
+			if prevIssue.ParentIssueID.Valid && *req.Updates.Status == "in_review" {
+				continue
+			}
 			params.Status = pgtype.Text{String: *req.Updates.Status, Valid: true}
 		}
 		if req.Updates.Priority != nil {

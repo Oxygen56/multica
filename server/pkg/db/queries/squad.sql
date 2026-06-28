@@ -149,3 +149,41 @@ LEFT JOIN issue i
        ON i.id = atq.issue_id
 WHERE sm.squad_id = $1
 ORDER BY sm.created_at ASC, atq.dispatched_at DESC NULLS LAST;
+
+-- name: GetSquadCapability :one
+-- Returns the capability JSON for a single squad. NULL means undeclared.
+SELECT capability FROM squad WHERE id = $1;
+
+-- name: SetSquadCapability :one
+-- Stores (or overwrites) the capability JSON for a squad. Uses jsonb_build_object
+-- so callers pass primitive scalars and let Postgres assemble the JSON — that way
+-- sqlc generates typed Go parameters instead of a raw []byte.
+UPDATE squad SET
+    capability = jsonb_build_object(
+        'domains',    sqlc.arg('domains')::jsonb,
+        'keywords',   sqlc.arg('keywords')::jsonb,
+        'description', sqlc.arg('description')::text::jsonb
+    ),
+    updated_at = now()
+WHERE id = $1
+RETURNING capability;
+
+-- name: DeleteSquadCapability :one
+-- Clears the capability field. Returns the squad row so callers can confirm
+-- the squad exists and is in the current workspace.
+UPDATE squad SET capability = NULL, updated_at = now()
+WHERE id = $1
+RETURNING id;
+
+-- name: ListSquadCapabilities :many
+-- Lists all non-archived squads with their capability (if declared) and basic
+-- identity columns. Used by `squad route` to compute keyword-overlap scores in
+-- Go without a separate squad-list round-trip.
+SELECT
+    s.id,
+    s.name,
+    s.description,
+    s.capability
+FROM squad s
+WHERE s.workspace_id = $1 AND s.archived_at IS NULL
+ORDER BY s.name ASC;

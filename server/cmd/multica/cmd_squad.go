@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -497,6 +498,241 @@ func runSquadActivity(cmd *cobra.Command, args []string) error {
 }
 
 // ── Init ────────────────────────────────────────────────────────────────────
+	// ── Capability ───────────────────────────────────────────────────────────────
+
+	var squadCapabilityCmd = &cobra.Command{
+		Use:   "capability",
+		Short: "Manage squad capability declarations for cross-squad discovery",
+	}
+
+	var squadCapabilityGetCmd = &cobra.Command{
+		Use:   "get <squad-id>",
+		Short: "Get a squad's declared capability",
+		Args:  exactArgs(1),
+		RunE:  runSquadCapabilityGet,
+	}
+
+	func runSquadCapabilityGet(cmd *cobra.Command, args []string) error {
+		client, err := newAPIClient(cmd)
+		if err != nil {
+			return err
+		}
+		ctx, cancel := cli.APIContext(context.Background())
+		defer cancel()
+
+		var result map[string]any
+		if err := client.GetJSON(ctx, "/api/squads/"+args[0]+"/capability", &result); err != nil {
+			return fmt.Errorf("get squad capability: %w", err)
+		}
+
+		output, _ := cmd.Flags().GetString("output")
+		if output == "json" {
+			return cli.PrintJSON(os.Stdout, result)
+		}
+
+		fmt.Printf("Squad:       %s\n", strVal(result, "squad_name"))
+		fmt.Printf("Squad ID:    %s\n", strVal(result, "squad_id"))
+		fmt.Printf("Domains:     %s\n", joinStrs(result, "domains"))
+		fmt.Printf("Keywords:    %s\n", joinStrs(result, "keywords"))
+		fmt.Printf("Description: %s\n", strVal(result, "description"))
+		return nil
+	}
+
+	var squadCapabilitySetCmd = &cobra.Command{
+		Use:   "set <squad-id>",
+		Short: "Set a squad's capability declaration",
+		Args:  exactArgs(1),
+		RunE:  runSquadCapabilitySet,
+	}
+
+	func runSquadCapabilitySet(cmd *cobra.Command, args []string) error {
+		domains, _ := cmd.Flags().GetStringSlice("domains")
+		keywords, _ := cmd.Flags().GetStringSlice("keywords")
+		description, _ := cmd.Flags().GetString("description")
+
+		if len(keywords) == 0 {
+			return fmt.Errorf("--keywords is required (comma-separated list)")
+		}
+
+		client, err := newAPIClient(cmd)
+		if err != nil {
+			return err
+		}
+		ctx, cancel := cli.APIContext(context.Background())
+		defer cancel()
+
+		body := map[string]any{
+			"domains":     domains,
+			"keywords":    keywords,
+			"description": description,
+		}
+
+		var result map[string]any
+		if err := client.PutJSON(ctx, "/api/squads/"+args[0]+"/capability", body, &result); err != nil {
+			return fmt.Errorf("set squad capability: %w", err)
+		}
+
+		output, _ := cmd.Flags().GetString("output")
+		if output == "json" {
+			return cli.PrintJSON(os.Stdout, result)
+		}
+		fmt.Fprintf(os.Stderr, "Capability set for squad %s (%s)\n",
+			strVal(result, "squad_name"), strVal(result, "squad_id"))
+		return nil
+	}
+
+	var squadCapabilityListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "List all declared squad capabilities in the workspace",
+		Args:  cobra.NoArgs,
+		RunE:  runSquadCapabilityList,
+	}
+
+	func runSquadCapabilityList(cmd *cobra.Command, _ []string) error {
+		client, err := newAPIClient(cmd)
+		if err != nil {
+			return err
+		}
+		ctx, cancel := cli.APIContext(context.Background())
+		defer cancel()
+
+		var results []map[string]any
+		if err := client.GetJSON(ctx, "/api/squads/capabilities", &results); err != nil {
+			return fmt.Errorf("list squad capabilities: %w", err)
+		}
+
+		output, _ := cmd.Flags().GetString("output")
+		if output == "json" {
+			return cli.PrintJSON(os.Stdout, results)
+		}
+
+		if len(results) == 0 {
+			fmt.Fprintln(os.Stderr, "No squad capabilities declared. Use `multica squad capability set <squad-id>` to declare one.")
+			return nil
+		}
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+		fmt.Fprintln(w, "SQUAD\tDOMAINS\tKEYWORDS")
+		for _, r := range results {
+			fmt.Fprintf(w, "%s\t%s\t%s\n",
+				strVal(r, "squad_name"),
+				joinStrs(r, "domains"),
+				joinStrs(r, "keywords"))
+		}
+		return w.Flush()
+	}
+
+	var squadCapabilityDeleteCmd = &cobra.Command{
+		Use:   "delete <squad-id>",
+		Short: "Delete a squad's capability declaration",
+		Args:  exactArgs(1),
+		RunE:  runSquadCapabilityDelete,
+	}
+
+	func runSquadCapabilityDelete(cmd *cobra.Command, args []string) error {
+		client, err := newAPIClient(cmd)
+		if err != nil {
+			return err
+		}
+		ctx, cancel := cli.APIContext(context.Background())
+		defer cancel()
+
+		if err := client.DeleteJSON(ctx, "/api/squads/"+args[0]+"/capability"); err != nil {
+			return fmt.Errorf("delete squad capability: %w", err)
+		}
+
+		output, _ := cmd.Flags().GetString("output")
+		if output == "json" {
+			return cli.PrintJSON(os.Stdout, map[string]any{"squad_id": args[0], "deleted": true})
+		}
+		fmt.Fprintf(os.Stderr, "Capability deleted for squad %s.\n", args[0])
+		return nil
+	}
+
+	// ── Route ───────────────────────────────────────────────────────────────────
+
+	var squadRouteCmd = &cobra.Command{
+		Use:   "route <query>",
+		Short: "Find the best squad for a task by keyword matching",
+		Long: `Discover which squad is best suited for a task by matching keywords
+from your task description against each squad's declared capabilities.
+
+Returns squads ranked by match score. Squads that haven't declared
+capabilities are listed separately as a nudge.`,
+		Args: exactArgs(1),
+		RunE: runSquadRoute,
+	}
+
+	func runSquadRoute(cmd *cobra.Command, args []string) error {
+		query := args[0]
+
+		client, err := newAPIClient(cmd)
+		if err != nil {
+			return err
+		}
+		ctx, cancel := cli.APIContext(context.Background())
+		defer cancel()
+
+		body := map[string]any{
+			"query": query,
+		}
+
+		var result map[string]any
+		if err := client.PostJSON(ctx, "/api/squads/route", body, &result); err != nil {
+			return fmt.Errorf("route squad: %w", err)
+		}
+
+		output, _ := cmd.Flags().GetString("output")
+		if output == "json" {
+			return cli.PrintJSON(os.Stdout, result)
+		}
+
+		// Print matches table.
+		matches, _ := result["matches"].([]any)
+		if len(matches) > 0 {
+			fmt.Println("Matches:")
+			w := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+			fmt.Fprintln(w, "SQUAD\tSCORE\tDOMAINS\tKEYWORDS")
+			for _, m := range matches {
+				entry := m.(map[string]any)
+				fmt.Fprintf(w, "%s\t%.0f\t%s\t%s\n",
+					strVal(entry, "squad_name"),
+					entry["score"],
+					joinStrs(entry, "domains"),
+					joinStrs(entry, "keywords"))
+			}
+			w.Flush()
+		} else {
+			fmt.Println("No matching squads found.")
+		}
+
+		// Print undeclared nudge.
+		undeclared, _ := result["undeclared"].([]any)
+		if len(undeclared) > 0 {
+			names := make([]string, len(undeclared))
+			for i, u := range undeclared {
+				names[i] = fmt.Sprint(u)
+			}
+			fmt.Fprintf(os.Stderr, "\nSquads without declared capability: %s\n", strings.Join(names, ", "))
+		}
+		return nil
+	}
+
+	// ── Helpers ─────────────────────────────────────────────────────────────────
+
+	// joinStrs extracts a []any from a map[string]any key and joins its string
+	// representations with ", ". Used for table display of domains/keywords.
+	func joinStrs(m map[string]any, key string) string {
+		arr, ok := m[key].([]any)
+		if !ok || len(arr) == 0 {
+			return "-"
+		}
+		parts := make([]string, len(arr))
+		for i, v := range arr {
+			parts[i] = fmt.Sprint(v)
+		}
+		return strings.Join(parts, ", ")
+	}
 
 func init() {
 	// list
@@ -551,11 +787,36 @@ func init() {
 	squadMemberCmd.AddCommand(squadMemberRemoveCmd)
 	squadMemberCmd.AddCommand(squadMemberSetRoleCmd)
 
+	squadCapabilityCmd.AddCommand(squadCapabilityGetCmd)
+	squadCapabilityCmd.AddCommand(squadCapabilitySetCmd)
+	squadCapabilityCmd.AddCommand(squadCapabilityListCmd)
+	squadCapabilityCmd.AddCommand(squadCapabilityDeleteCmd)
+
 	squadCmd.AddCommand(squadListCmd)
 	squadCmd.AddCommand(squadGetCmd)
 	squadCmd.AddCommand(squadCreateCmd)
 	squadCmd.AddCommand(squadUpdateCmd)
 	squadCmd.AddCommand(squadDeleteCmd)
 	squadCmd.AddCommand(squadMemberCmd)
+	squadCmd.AddCommand(squadCapabilityCmd)
+	squadCmd.AddCommand(squadRouteCmd)
 	squadCmd.AddCommand(squadActivityCmd)
+
+	// capability get
+	squadCapabilityGetCmd.Flags().String("output", "table", "Output format: table or json")
+
+	// capability set
+	squadCapabilitySetCmd.Flags().StringSlice("domains", nil, "Domain tags (comma-separated, e.g. tech_architecture,data_engineering)")
+	squadCapabilitySetCmd.Flags().StringSlice("keywords", nil, "Keyword tokens for matching (comma-separated, required)")
+	squadCapabilitySetCmd.Flags().String("description", "", "Free-text description of squad expertise")
+	squadCapabilitySetCmd.Flags().String("output", "json", "Output format: table or json")
+
+	// capability list
+	squadCapabilityListCmd.Flags().String("output", "table", "Output format: table or json")
+
+	// capability delete
+	squadCapabilityDeleteCmd.Flags().String("output", "table", "Output format: table or json")
+
+	// route
+	squadRouteCmd.Flags().String("output", "table", "Output format: table or json")
 }

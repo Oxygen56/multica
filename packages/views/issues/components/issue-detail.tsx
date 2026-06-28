@@ -7,6 +7,7 @@ import { AppLink } from "../../navigation";
 import { useNavigation } from "../../navigation";
 import {
   Archive,
+  ArrowDown,
   Calendar,
   CalendarClock,
   CalendarDays,
@@ -744,6 +745,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
   const [propertiesOpen, setPropertiesOpen] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [parentIssueOpen, setParentIssueOpen] = useState(true);
+  const [subIssuesSidebarOpen, setSubIssuesSidebarOpen] = useState(true);
   const [pullRequestsOpen, setPullRequestsOpen] = useState(true);
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [tokenUsageOpen, setTokenUsageOpen] = useState(true);
@@ -1267,6 +1269,67 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
     [uploadWithToast],
   );
 
+  // Description collapse — long descriptions are collapsed by default.
+  const DESC_COLLAPSE_THRESHOLD = 500;
+  const descNeedsCollapse = (issue?.description?.length ?? 0) > DESC_COLLAPSE_THRESHOLD;
+  const [descCollapsed, setDescCollapsed] = useState(() => descNeedsCollapse);
+  // Reset collapse state when the issue changes.
+  useEffect(() => {
+    setDescCollapsed(descNeedsCollapse);
+  }, [id, descNeedsCollapse]);
+
+  // Ref for the bottom comment input so the `j` keyboard shortcut can focus it.
+  const commentInputContainerRef = useRef<HTMLDivElement>(null);
+
+  // "Jump to latest" button visibility — shown when scrolled away from bottom.
+  const [showJumpButton, setShowJumpButton] = useState(false);
+  const JUMP_SCROLL_THRESHOLD = 200;
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerEl;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setShowJumpButton(distanceFromBottom > JUMP_SCROLL_THRESHOLD);
+  }, [scrollContainerEl]);
+  useEffect(() => {
+    const el = scrollContainerEl;
+    if (!el) return;
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    // Check initial state once the ref populates.
+    handleScroll();
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, [scrollContainerEl, handleScroll]);
+
+  const jumpToLatest = useCallback(() => {
+    const el = scrollContainerEl;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [scrollContainerEl]);
+
+  // Keyboard shortcut `j` to jump focus to the comment/reply input.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Ignore when focus is inside an input, textarea, or contenteditable.
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isEditable = (e.target as HTMLElement)?.isContentEditable;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || isEditable) return;
+      // Modifier keys shouldn't trigger.
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "j") {
+        e.preventDefault();
+        // Focus the ContentEditor inside the CommentInput.
+        const container = commentInputContainerRef.current;
+        const editor = container?.querySelector("[contenteditable]") as HTMLElement | null;
+        if (editor) {
+          editor.focus();
+        }
+        // Also scroll near the bottom so the input is visible.
+        jumpToLatest();
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [jumpToLatest]);
+
   useEffect(() => {
     descPendingAttachmentsRef.current = [];
     setDescPendingAttachments([]);
@@ -1597,6 +1660,44 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
         </div>
       )}
 
+      {/* Sub-issues — sidebar section. Renders only when the issue has
+          children. Uses the same `childIssues` data as the inline list
+          below the description — no extra network request. */}
+      {childIssues.length > 0 && (() => {
+        const doneCount = childIssues.filter((c) => c.status === "done").length;
+        return (
+          <div>
+            <button
+              type="button"
+              className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors mb-2 hover:bg-accent/70 ${subIssuesSidebarOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
+              onClick={() => setSubIssuesSidebarOpen(!subIssuesSidebarOpen)}
+            >
+              {t(($) => $.detail.section_sub_issues)}
+              <ChevronRight className={`!size-3 shrink-0 stroke-[2.5] text-muted-foreground transition-transform ${subIssuesSidebarOpen ? "rotate-90" : ""}`} />
+              <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-2 py-0.5">
+                <ProgressRing done={doneCount} total={childIssues.length} size={11} />
+                <span className="text-[11px] text-muted-foreground tabular-nums font-medium">
+                  {doneCount}/{childIssues.length}
+                </span>
+              </span>
+            </button>
+            {subIssuesSidebarOpen && <div className="pl-2 space-y-0.5">
+              {childIssues.map((child) => (
+                <AppLink
+                  key={child.id}
+                  href={paths.issueDetail(child.id)}
+                  className="flex items-center gap-1.5 rounded-md px-2 py-1.5 -mx-2 text-xs hover:bg-accent/50 transition-colors group"
+                >
+                  <StatusIcon status={child.status} className="h-3.5 w-3.5 shrink-0" />
+                  <span className="text-muted-foreground shrink-0 tabular-nums">{child.identifier}</span>
+                  <span className="truncate group-hover:text-foreground">{child.title}</span>
+                </AppLink>
+              ))}
+            </div>}
+          </div>
+        );
+      })()}
+
       {/* Pull requests — hidden when the workspace disables the PR sidebar
           (or the GitHub master switch is off). Backend data is kept either
           way so re-enabling restores the section instantly. */}
@@ -1895,12 +1996,13 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
           }
         />
 
+        <div className="relative flex-1 min-h-0 flex flex-col">
         <div
           ref={setScrollContainerEl}
           data-tab-scroll-root
-          className="relative flex-1 overflow-y-auto"
+          className="flex-1 overflow-y-auto"
         >
-        <div className="mx-auto w-full max-w-4xl px-8 py-8">
+        <div className="mx-auto w-full max-w-4xl px-8 py-8 pb-4">
           <TitleEditor
             key={`title-${id}`}
             defaultValue={issue.title}
@@ -1938,43 +2040,33 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
           )}
 
           <div {...descDropZoneProps} className="relative mt-5 rounded-lg">
-            <ContentEditor
-              ref={descEditorRef}
-              key={id}
-              defaultValue={issue.description || ""}
-              placeholder={t(($) => $.detail.desc_placeholder)}
-              onUpdate={(md) => {
-                // Bind any pending uploads still referenced in the markdown
-                // so they appear in `issueAttachments` after refresh and the
-                // editor's text/code preview keeps working past reload.
-                //
-                // Match with `contentReferencesAttachment`, NOT `md.includes(a.url)`:
-                // the editor persists the durable `markdownLink`
-                // (`/api/attachments/<id>/download` / `markdown_url`) into the
-                // body, never the raw storage `a.url`. A bare `md.includes(a.url)`
-                // therefore never matches, so the upload is never linked via
-                // `attachment_ids`. After reload it's absent from
-                // `issueAttachments`, the renderer can't resolve it to a
-                // freshly-signed `download_url`, and the persisted auth-gated
-                // download endpoint fails to load as a native <img> on clients
-                // whose origin isn't the API host (Desktop/Electron, mobile
-                // webview) — while still working on web via the cookie/proxy.
-                // This mirrors the comment/reply/chat composers, which already
-                // bind via `contentReferencesAttachment` (MUL-3130 / MUL-3192).
-                const ids = descPendingAttachmentsRef.current
-                  .filter((a) => contentReferencesAttachment(md, a))
-                  .map((a) => a.id);
-                handleUpdateField({ description: md, attachment_ids: ids.length > 0 ? ids : undefined });
-              }}
-              onUploadFile={handleDescriptionUpload}
-              debounceMs={1500}
-              // Closing the issue modal must save what the user last saw —
-              // without the flush, a paste followed by a quick close loses
-              // the image markdown and its attachment_ids bind (MUL-3254).
-              flushPendingOnUnmount
-              currentIssueId={id}
-              attachments={descEditorAttachments}
-            />
+            {/* Collapsible description — long descriptions are collapsed by default
+                with a gradient fade, so the activity section is always within
+                view on page load. The ContentEditor is a rich-text editor
+                (Tiptap), so we can't truncate the markdown — instead we use
+                CSS max-height to clip and a gradient overlay to signal truncation. */}
+            <div className={cn("relative", descCollapsed && "max-h-[240px] overflow-hidden")}>
+              <ContentEditor
+                ref={descEditorRef}
+                key={id}
+                defaultValue={issue.description || ""}
+                placeholder={t(($) => $.detail.desc_placeholder)}
+                onUpdate={(md) => {
+                  const ids = descPendingAttachmentsRef.current
+                    .filter((a) => contentReferencesAttachment(md, a))
+                    .map((a) => a.id);
+                  handleUpdateField({ description: md, attachment_ids: ids.length > 0 ? ids : undefined });
+                }}
+                onUploadFile={handleDescriptionUpload}
+                debounceMs={1500}
+                flushPendingOnUnmount
+                currentIssueId={id}
+                attachments={descEditorAttachments}
+              />
+              {descCollapsed && descNeedsCollapse && (
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
+              )}
+            </div>
 
             <div className="flex items-center gap-1 mt-3">
               <ReactionBar
@@ -1987,6 +2079,15 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                 size="sm"
                 onSelect={(file) => descEditorRef.current?.uploadFile(file)}
               />
+              {descNeedsCollapse && (
+                <button
+                  type="button"
+                  className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setDescCollapsed((v) => !v)}
+                >
+                  {descCollapsed ? t(($) => $.detail.desc_show_more) : t(($) => $.detail.desc_show_less)}
+                </button>
+              )}
             </div>
             {descDragOver && <FileDropOverlay />}
           </div>
@@ -2213,17 +2314,34 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
               )
             )}
 
-            {/* Bottom comment input — no avatar, full width */}
-            <div className="mt-4">
-              {/* key={id}: web's /issues/[id] route doesn't remount on
-                  issueId change, so without an explicit key the editor
-                  keeps the previous issue's in-memory content and the
-                  next keystroke would flush it into the new issue's
-                  draft key. */}
-              <CommentInput key={id} issueId={id} onSubmit={submitComment} />
-            </div>
           </div>
         </div>
+        </div>
+
+        {/* Sticky bottom reply bar — always visible so the user can
+            reply without scrolling to the bottom on long issues. */}
+        <div
+          ref={commentInputContainerRef}
+          className="shrink-0 border-t border-border bg-background px-8 py-3"
+        >
+          <div className="mx-auto w-full max-w-4xl">
+            <CommentInput key={id} issueId={id} onSubmit={submitComment} />
+          </div>
+        </div>
+
+        {/* "Jump to latest" floating button — appears when the user has
+            scrolled away from the bottom of the timeline. Clicking it
+            smoothly scrolls to the bottom. */}
+        {showJumpButton && (
+          <button
+            type="button"
+            onClick={jumpToLatest}
+            className="absolute bottom-20 right-8 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background shadow-md text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-all"
+            aria-label={t(($) => $.detail.jump_to_latest)}
+          >
+            <ArrowDown className="h-4 w-4" />
+          </button>
+        )}
         </div>
       </div>
   );
