@@ -1,6 +1,11 @@
 # --- Build stage ---
 FROM golang:1.26-alpine AS builder
 
+ARG GOPROXY
+ARG GOSUMDB
+ENV GOPROXY=${GOPROXY:-https://proxy.golang.org,direct}
+ENV GOSUMDB=${GOSUMDB:-sum.golang.org}
+
 RUN apk add --no-cache git
 
 WORKDIR /src
@@ -58,5 +63,8 @@ COPY docker/entrypoint.sh .
 RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 
 EXPOSE 8080
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget -q -O- http://localhost:8080/health 2>/dev/null || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]

@@ -111,16 +111,37 @@ services:
       MULTICA_LARK_SECRET_KEY: ${MULTICA_LARK_SECRET_KEY:-}
       MULTICA_LARK_HTTP_BASE_URL: ${MULTICA_LARK_HTTP_BASE_URL:-}
       MULTICA_LARK_CALLBACK_BASE_URL: ${MULTICA_LARK_CALLBACK_BASE_URL:-}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:8080/health | grep -q '\"status\":\"ok\"'",
+        ]
+      interval: 15s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
     restart: unless-stopped
 
   frontend:
     image: ${MULTICA_WEB_IMAGE:-ghcr.io/multica-ai/multica-web}:${MULTICA_IMAGE_TAG:-latest}
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
     environment:
       HOSTNAME: "0.0.0.0"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:3000 | grep -q '<html'",
+        ]
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
     restart: unless-stopped
 
 volumes:
