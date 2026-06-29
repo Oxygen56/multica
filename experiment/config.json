@@ -1,0 +1,64 @@
+{
+  "experiment_id": "agi-cognitive-benchmark-2026",
+  "title": "AGI认知能力对照实验：三组架构 × 100任务 × 6认知域",
+  "groups": {
+    "A": {
+      "name": "基线组（单层Sys2）",
+      "architecture": "Sys2 only",
+      "components": ["总管"],
+      "agent_count": 1,
+      "has_reviewer": false,
+      "has_agent_pool": false,
+      "has_memory_system": false,
+      "description": "仅总管（Sys2）执行任务，无监察官审查，无agent池并行，无记忆系统",
+      "config": {
+        "allow_delegation": false,
+        "require_review": false,
+        "memory_enabled": false
+      }
+    },
+    "B": {
+      "name": "两层组（Sys2+Sys3）",
+      "architecture": "Sys2 + Sys3",
+      "components": ["总管", "监察官"],
+      "agent_count": 2,
+      "has_reviewer": true,
+      "has_agent_pool": false,
+      "has_memory_system": false,
+      "description": "总管（Sys2）执行 + 监察官（Sys3）审查，当前生产配置",
+      "config": {
+        "allow_delegation": false,
+        "require_review": true,
+        "memory_enabled": false
+      }
+    },
+    "C": {
+      "name": "完整组（五层+D）",
+      "architecture": "Sys0-4 + Dual Memory",
+      "components": ["Sys0-执行Agent", "Sys1-战术Agent池", "Sys2-总管", "Sys3-监察官", "Sys4-记录Agent", "工作记忆", "情景记忆"],
+      "agent_count": 7,
+      "has_reviewer": true,
+      "has_agent_pool": true,
+      "has_memory_system": true,
+      "description": "完整五层架构 + 双层记忆系统",
+      "config": {
+        "allow_delegation": true,
+        "require_review": true,
+        "memory_enabled": true,
+        "agent_pool_size": 5
+      }
+    }
+  },
+  "metrics": {
+    "completion_rate": {"type": "boolean", "description": "是否满足acceptance_criteria"},
+    "first_pass_rate": {"type": "boolean", "description": "第一轮是否直接通过（无重试）"},
+    "avg_fix_rounds": {"type": "integer", "description": "从开始到通过的retry次数"},
+    "error_density": {"type": "float", "description": "事实性错误数/总断言数"},
+    "cross_domain_transfer": {"type": "float", "description": "同域前5任务vs后5任务的完成率变化"},
+    "time_seconds": {"type": "float", "description": "从任务开始到最终交付的时间（秒）"},
+    "token_consumption": {"type": "integer", "description": "总token使用量"}
+  },
+  "execution_order": "randomized",
+  "cooling_period_seconds": 30,
+  "evaluator_independence": "评估由独立于执行组的评估agent执行"
+}

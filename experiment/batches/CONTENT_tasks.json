@@ -1,0 +1,417 @@
+{
+  "domain": "CONTENT",
+  "task_count": 16,
+  "tasks": [
+    {
+      "id": "CONTENT-001",
+      "domain": "CONTENT",
+      "difficulty": 2,
+      "title": "撰写技术博客：为什么我们选择Go",
+      "description": "以技术负责人视角，撰写一篇技术博客，解释团队为什么选择Go语言作为后端主要开发语言。\n包括：\n1. 决策背景（团队以前用什么，遇到了什么问题）\n2. 候选语言比较（Go vs Java vs Python vs Rust vs Node.js）\n3. 关键考量：性能需求、团队学习曲线、生态成熟度、部署运维\n4. 决策后的效果（1年后的数据对比）\n5. 如果现在重新选择会不会有不同的决定\n\n字数：1500-2000字。目标读者：CTO和技术Leader。语气：客观务实，不鼓吹。",
+      "acceptance_criteria": [
+        "文章结构合理",
+        "比较客观（不偏袒）",
+        "有数据支撑",
+        "语气务实",
+        "字数在范围内"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.4,
+        "structure": 0.2,
+        "accuracy": 0.2,
+        "readability": 0.2
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "STRAT",
+        "CODE"
+      ],
+      "expected_output_type": "blog_post"
+    },
+    {
+      "id": "CONTENT-002",
+      "domain": "CONTENT",
+      "difficulty": 3,
+      "title": "撰写事件复盘报告",
+      "description": "基于以下场景撰写一份生产事件复盘（Postmortem）报告：\n\n事件：某周五晚10点，数据库主库因磁盘满而不可写入，影响50%用户约3小时。根因：日志表缺少自动清理机制，监控告警阈值设置不合理（95%才告警），值班人员响应延迟（告警发到了已离职员工的邮箱）。\n\n报告结构：时间线、影响范围、根因分析（5 Whys）、改进措施（分技术改进、流程改进、监控改进）、时间线和负责人。不追究个人责任，聚焦系统改进。语气：专业、客观、无blame。",
+      "acceptance_criteria": [
+        "时间线清晰准确",
+        "5 Whys分析深入（不浅尝辄止）",
+        "改进措施具体可执行",
+        "有责任人和时间线",
+        "语气无blame"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.4,
+        "structure": 0.2,
+        "accuracy": 0.2,
+        "readability": 0.2
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "STRAT"
+      ],
+      "expected_output_type": "postmortem_report"
+    },
+    {
+      "id": "CONTENT-003",
+      "domain": "CONTENT",
+      "difficulty": 4,
+      "title": "撰写技术方案文档",
+      "description": "为以下需求撰写一份技术方案文档（Technical Design Doc）：\n需求：将现有的单体后端（Python/Django, 50万行代码）逐步迁移到微服务。\n第一阶段：将用户认证和订单模块拆分为独立服务。\n\n文档结构：1. 背景和目标 2. 现状分析 3. 方案设计（含架构图描述） 4. 迁移步骤 5. 风险与缓解 6. 数据一致性保证 7. 测试策略 8. 回滚方案 9. 时间估算\n\n目标读者：技术委员会（做架构决策），需要足够的细节来评估可行性。",
+      "acceptance_criteria": [
+        "文档结构完整",
+        "方案具体可操作",
+        "风险分析深入",
+        "数据一致性方案正确",
+        "回滚方案可执行",
+        "时间估算合理"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.4,
+        "structure": 0.2,
+        "accuracy": 0.2,
+        "readability": 0.2
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE",
+        "DESIGN",
+        "STRAT"
+      ],
+      "expected_output_type": "technical_design_doc"
+    },
+    {
+      "id": "CONTENT-004",
+      "domain": "CONTENT",
+      "difficulty": 1,
+      "title": "编写README文档",
+      "description": "为一个开源项目（AI Agent运行时平台）编写README.md。\n项目特点：\n- 支持多种LLM后端（OpenAI、Anthropic、本地模型）\n- Agent可以通过YAML或Python DSL定义\n- 内置记忆系统和工具库\n- MIT协议开源\n\nREADME需要包含：项目简介、快速开始（5分钟上手）、核心特性、安装方法、简单示例、文档链接、贡献指南概要、License。\n加分：加入一个badge区域和一张架构示意图（用ASCII art或mermaid）。",
+      "acceptance_criteria": [
+        "README结构完整",
+        "快速开始部分真正可在5分钟内完成",
+        "示例代码正确",
+        "语气吸引人但不夸大",
+        "mermaid图或ASCII art清晰"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.3,
+        "structure": 0.3,
+        "accuracy": 0.2,
+        "readability": 0.2
+      },
+      "min_steps": 3,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "readme_doc"
+    },
+    {
+      "id": "CONTENT-005",
+      "domain": "CONTENT",
+      "difficulty": 3,
+      "title": "撰写技术演讲大纲",
+      "description": "为一场30分钟的meetup技术分享准备演讲大纲和幻灯片内容结构。\n主题：从单体到微服务——我们学到了什么\n听众：中级以上开发者，50-80人。\n\n大纲应包含：\n1. 每张幻灯片的标题和要点\n2. 故事线（开头hook、中间展开、结尾takeaway）\n3. 至少3个真实场景的代码/架构示例\n4. 互动环节设计（在哪提问、怎么引发讨论）\n5. 时间分配（30分钟精确到每部分）",
+      "acceptance_criteria": [
+        "幻灯片结构合理（约20-30张）",
+        "故事线有hook和takeaway",
+        "示例具体有用",
+        "时间分配合理",
+        "互动设计自然"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.4,
+        "structure": 0.3,
+        "accuracy": 0.1,
+        "readability": 0.2
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE",
+        "STRAT"
+      ],
+      "expected_output_type": "presentation_outline"
+    },
+    {
+      "id": "CONTENT-006",
+      "domain": "CONTENT",
+      "difficulty": 4,
+      "title": "撰写技术白皮书摘要",
+      "description": "为一篇技术白皮书撰写执行摘要（Executive Summary）。白皮书主题：\nAI Agent系统在生产环境中的可靠性研究。\n\n研究内容（你需要合理想象）：\n- 对50个使用AI Agent的生产系统进行了6个月的可靠性分析\n- 测量了Agent执行任务的错误率、自恢复率、幻觉率\n- 提出了一套提升Agent可靠性的架构模式\n\n执行摘要要求：500-800字，包含：问题背景、研究方法、关键发现（3-5个）、结论和建议。读者是忙的CTO/VP Engineering，他们可能只读这一页。",
+      "acceptance_criteria": [
+        "执行摘要字数在范围内",
+        "关键发现有数据支撑",
+        "结论有可操作建议",
+        "读起来像真正的白皮书摘要",
+        "适合CTO/VP阅读"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.5,
+        "structure": 0.2,
+        "accuracy": 0.15,
+        "readability": 0.15
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "RESEARCH",
+        "STRAT"
+      ],
+      "expected_output_type": "executive_summary"
+    },
+    {
+      "id": "CONTENT-007",
+      "domain": "CONTENT",
+      "difficulty": 2,
+      "title": "撰写API变更通知",
+      "description": "你的平台需要通知所有API用户：v1版本的3个端点将在3个月后废弃。\n撰写：\n1. 邮件通知（发给注册开发者）\n2. 变更日志（放在开发者门户）\n3. v1→v2迁移指南（只涉及3个端点：用户信息、订单列表、支付回调）\n\n关键：语气要体现出对开发者时间的尊重，不能只是冷冰冰的公告。迁移指南必须包含清晰的代码对比（v1调用方式 vs v2调用方式）。",
+      "acceptance_criteria": [
+        "邮件通知语气恰当",
+        "变更日志完整",
+        "迁移指南代码对比清晰",
+        "三个端点都有覆盖",
+        "时间线和联系方式明确"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.3,
+        "structure": 0.25,
+        "accuracy": 0.25,
+        "readability": 0.2
+      },
+      "min_steps": 3,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "api_migration_guide"
+    },
+    {
+      "id": "CONTENT-008",
+      "domain": "CONTENT",
+      "difficulty": 5,
+      "title": "撰写AGI发展年度综述",
+      "description": "撰写一篇关于2024-2025年AGI进展的年度综述文章。\n覆盖：\n1. 模型能力进展（GPT、Claude、Gemini、DeepSeek、Qwen等）\n2. Agent系统发展（从ReAct到多Agent协作）\n3. 基础设施和工具链（LangChain、AutoGen、CrewAI、Multica等）\n4. 安全和治理进展\n5. 开源vs闭源的态势变化\n6. 对2026年的5个预测\n\n字数：3000-4000字。目标读者：AI从业者。要求：每个论述有具体案例和数据支撑，不空泛。对DeepSeek面试有参考价值——展示对AGI全局生态的理解。",
+      "acceptance_criteria": [
+        "覆盖6个方面",
+        "每个论述有案例/数据支撑",
+        "预测有理有据",
+        "不空泛不喊口号",
+        "面试可用见解可单独标注"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.5,
+        "structure": 0.2,
+        "accuracy": 0.2,
+        "readability": 0.1
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "RESEARCH",
+        "STRAT"
+      ],
+      "expected_output_type": "annual_review"
+    },
+    {
+      "id": "CONTENT-009",
+      "domain": "CONTENT",
+      "difficulty": 2,
+      "title": "撰写面试题设计文档",
+      "description": "为招聘高级后端工程师设计一套技术面试题目。包括：\n1. 算法题1道（中等难度，含示例输入输出和评分标准）\n2. 系统设计题1道（含评判维度和好的答案应该覆盖的要点）\n3. 代码审查题1道（给一段有问题的代码，列出期望候选人发现的问题）\n4. 行为面试题3道（含评估维度）\n\n每道题需要：题目描述、时间分配、评分rubric、好的回答示例要点。",
+      "acceptance_criteria": [
+        "算法题难度适中且有评分标准",
+        "系统设计题评判维度合理",
+        "代码审查题的问题点设计合理",
+        "行为题评估维度明确",
+        "整体难度匹配高级工程师级别"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.3,
+        "structure": 0.3,
+        "accuracy": 0.2,
+        "readability": 0.2
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE",
+        "DESIGN"
+      ],
+      "expected_output_type": "interview_design_doc"
+    },
+    {
+      "id": "CONTENT-010",
+      "domain": "CONTENT",
+      "difficulty": 3,
+      "title": "撰写架构决策记录(ADR)",
+      "description": "为以下3个架构决策撰写ADR（Architecture Decision Record）：\n1. 选择PostgreSQL而非MongoDB作为主数据库\n2. 采用事件驱动架构进行服务间通信\n3. 使用Kubernetes进行容器编排\n\n每个ADR遵循标准格式：Title、Status、Context、Decision、Consequences。\n后果部分要特别详细——正面的和负面的都要诚实记录。",
+      "acceptance_criteria": [
+        "三个ADR格式标准",
+        "Context描述充分（为什么需要做这个决策）",
+        "Decision部分明确（不模糊）",
+        "Consequences诚实（正面+负面）",
+        "整体读起来像真实项目文档"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.3,
+        "structure": 0.3,
+        "accuracy": 0.2,
+        "readability": 0.2
+      },
+      "min_steps": 3,
+      "cross_domain": [
+        "CODE",
+        "STRAT"
+      ],
+      "expected_output_type": "adr_documents"
+    },
+    {
+      "id": "CONTENT-011",
+      "domain": "CONTENT",
+      "difficulty": 4,
+      "title": "撰写产品需求文档(PRD)",
+      "description": "为以下功能撰写PRD：\n功能：AI Agent平台的\"Agent市场\"——用户可以发布、发现、复用其他用户创建的Agent模板。\n\nPRD结构：\n1. 背景和问题\n2. 目标用户和使用场景\n3. 功能需求（P0/P1/P2优先级）\n4. 非功能需求（安全、性能、扩展性）\n5. 用户故事\n6. 成功的衡量指标\n7. 与竞品的差异化\n8. 风险和假设\n\n这不是随便写写——要像真正的PM一样思考用户痛点和商业价值。",
+      "acceptance_criteria": [
+        "PRD结构完整",
+        "用户场景具体非虚构",
+        "优先级划分有理有据",
+        "成功指标可量化",
+        "竞品差异化真实"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.4,
+        "structure": 0.3,
+        "accuracy": 0.1,
+        "readability": 0.2
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "STRAT",
+        "DESIGN"
+      ],
+      "expected_output_type": "prd_document"
+    },
+    {
+      "id": "CONTENT-012",
+      "domain": "CONTENT",
+      "difficulty": 1,
+      "title": "翻译并本地化技术文档章节",
+      "description": "将以下英文技术文档的摘要翻译为中文，并进行本地化（不仅仅是翻译，要适应中文技术阅读习惯）：\n\n\"This library provides a unified interface for interacting with various LLM providers, supporting streaming responses, tool calling, and multi-modal inputs. It handles authentication, rate limiting, and automatic retries transparently. The architecture is plugin-based, allowing community contributions for new providers. Performance benchmarks show <50ms overhead compared to direct API calls in most scenarios.\"\n\n要求：\n1. 自然流畅的中文\n2. 技术术语处理得当（哪些保留英文、哪些翻译）\n3. 保持原文的技术精确性\n4. 添加中文读者可能需要额外了解的信息（如对国内开发者的相关替代品）",
+      "acceptance_criteria": [
+        "翻译准确不失真",
+        "中文流畅自然",
+        "术语处理得当",
+        "本地化信息有价值（非堆砌）"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.4,
+        "accuracy": 0.3,
+        "readability": 0.2,
+        "localization": 0.1
+      },
+      "min_steps": 2,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "localized_content"
+    },
+    {
+      "id": "CONTENT-013",
+      "domain": "CONTENT",
+      "difficulty": 5,
+      "title": "撰写AGI伦理与治理白皮书大纲",
+      "description": "撰写一份关于AGI伦理与治理的白皮书详细大纲。覆盖：\n1. AGI的定义和当前能力边界\n2. 核心伦理问题：偏见与公平、透明度与可解释性、隐私、责任归属\n3. 安全风险：对齐失败、能力涌现、误用与武器化\n4. 治理框架：各国监管路径对比（EU/US/CN）、行业自律、技术保障\n5. 推荐行动框架：对不同角色（开发者、部署者、监管者、公众）的建议\n\n大纲要详细到3级标题，每节标注预计字数和核心论点。对DeepSeek面试中的AGI治理讨论有参考价值。",
+      "acceptance_criteria": [
+        "大纲结构完整（到3级标题）",
+        "覆盖全部5个方面",
+        "每节核心论点有实质内容",
+        "不同国家监管路径对比客观",
+        "对DeepSeek面试的参考价值明确"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.5,
+        "structure": 0.3,
+        "accuracy": 0.1,
+        "readability": 0.1
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "STRAT",
+        "RESEARCH"
+      ],
+      "expected_output_type": "whitepaper_outline"
+    },
+    {
+      "id": "CONTENT-014",
+      "domain": "CONTENT",
+      "difficulty": 3,
+      "title": "撰写Onboarding文档",
+      "description": "为由5名新入职的软件工程师撰写一份2周的Onboarding计划文档。\n背景：公司是一个50人的SaaS公司，技术栈是Go+React+PostgreSQL+Kubernetes。\n\n文档包含：\n1. 第1周：环境搭建、代码库概览、架构介绍、第一个小任务\n2. 第2周：深入模块、参与Code Review、独立完成一个小feature\n3. 每个阶段的学习资源和mentor指导要点\n4. 检查点：第1周末和第2周末分别需要达到什么水平\n5. 新人常见问题和答案（FAQ）",
+      "acceptance_criteria": [
+        "计划可执行（每天有具体安排）",
+        "学习资源具体（链接/文档名）",
+        "检查点标准明确",
+        "FAQ覆盖真正常见的问题",
+        "文档语气友好包容"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.3,
+        "structure": 0.3,
+        "accuracy": 0.2,
+        "readability": 0.2
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "onboarding_guide"
+    },
+    {
+      "id": "CONTENT-015",
+      "domain": "CONTENT",
+      "difficulty": 2,
+      "title": "撰写Release Notes",
+      "description": "为以下虚构的大版本更新撰写Release Notes：\n产品：AI Agent开发平台 v2.0\n主要更新：\n1. 全新的Agent可视化编辑器（拖拽式DAG设计）\n2. 内置Agent模板市场（50+预置模板）\n3. Agent协作模式（多Agent可组成squad）\n4. 性能优化（Agent启动速度提升3倍）\n5. 破坏性变更：Agent定义格式从YAML迁移到JSON Schema\n6. 修复：修复了15个已知bug\n7. 安全：新增Agent执行沙箱\n\nRelease Notes需要包含：亮点、详细变更、升级指南（针对破坏性变更）、已知问题。语气：专业但有人情味（不是干巴巴的commit log）。",
+      "acceptance_criteria": [
+        "亮点突出但不浮夸",
+        "详细变更覆盖所有更新",
+        "升级指南清晰可操作",
+        "已知问题诚实列出",
+        "语气专业有人情味"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.3,
+        "structure": 0.25,
+        "accuracy": 0.25,
+        "readability": 0.2
+      },
+      "min_steps": 3,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "release_notes"
+    },
+    {
+      "id": "CONTENT-016",
+      "domain": "CONTENT",
+      "difficulty": 4,
+      "title": "撰写投资意向书执行摘要",
+      "description": "你是一家AI Agent基础设施公司的CTO，需要为A轮融资撰写一份技术部分的执行摘要。\n公司背景（可以是虚构的，但要合理）：\n- 产品：面向开发者的AI Agent运行和管理平台\n- 成立18个月，目前有500+注册开发者，20个付费企业客户\n- 核心差异化：支持Multi-Agent协作、内置记忆系统、开源核心+云服务\n- A轮融资目标：500万美元\n\n技术部分需要包含：\n1. 技术架构概述\n2. 核心技术壁垒（为什么别人不能轻易复制）\n3. 技术路线图（融到钱后12个月的开发计划）\n4. 技术团队简介\n5. 关键技术指标（性能、可靠性等）\n\n语气：自信但不夸大。投资人能看懂的技术语言。",
+      "acceptance_criteria": [
+        "技术架构描述清晰",
+        "技术壁垒分析言之有物（不是笼统的AI）",
+        "路线图具体可执行",
+        "技术指标有数字",
+        "投资人不需AI背景也能理解价值主张"
+      ],
+      "scoring_rubric": {
+        "content_quality": 0.5,
+        "structure": 0.2,
+        "accuracy": 0.15,
+        "readability": 0.15
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "STRAT",
+        "DESIGN"
+      ],
+      "expected_output_type": "pitch_deck_technical"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "group": "A",
+  "group_name": "基线组（单层Sys2）",
+  "architecture": "Sys2 only",
+  "total_tasks": 105,
+  "completed": 5,
+  "failed": 0,
+  "pending": 100,
+  "completion_rate": 1.0,
+  "first_pass_rate": 1.0,
+  "avg_fix_rounds": 0.0,
+  "avg_error_density": 0.0,
+  "avg_time_seconds": 192.0,
+  "total_token_consumption": 14000,
+  "by_domain": {
+    "CODE": {
+      "count": 1,
+      "completed": 1,
+      "completion_rate": 1.0
+    },
+    "MATH": {
+      "count": 1,
+      "completed": 1,
+      "completion_rate": 1.0
+    },
+    "RESEARCH": {
+      "count": 1,
+      "completed": 1,
+      "completion_rate": 1.0
+    },
+    "STRAT": {
+      "count": 1,
+      "completed": 1,
+      "completion_rate": 1.0
+    },
+    "DESIGN": {
+      "count": 1,
+      "completed": 1,
+      "completion_rate": 1.0
+    }
+  },
+  "cross_domain_transfer": {}
+}

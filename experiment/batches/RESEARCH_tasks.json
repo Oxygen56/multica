@@ -1,0 +1,407 @@
+{
+  "domain": "RESEARCH",
+  "task_count": 17,
+  "tasks": [
+    {
+      "id": "RESEARCH-001",
+      "domain": "RESEARCH",
+      "difficulty": 3,
+      "title": "向量数据库技术调研",
+      "description": "调研当前主流的向量数据库方案，用于RAG（检索增强生成）场景。\n调研对象至少包含：Pinecone、Weaviate、Milvus、Qdrant、Chroma、pgvector。\n评估维度：性能（QPS/延迟）、扩展性、运维复杂度、成本、生态集成、过滤能力。\n给出推荐方案（针对中小团队，数据量100万-1000万向量）和选型理由。",
+      "acceptance_criteria": [
+        "覆盖至少5个方案",
+        "每个方案有量化数据或合理估算",
+        "推荐有明确场景限定",
+        "说明了不做推荐的方案的缺点",
+        "至少引用3个来源"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "source_quality": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "research_report"
+    },
+    {
+      "id": "RESEARCH-002",
+      "domain": "RESEARCH",
+      "difficulty": 4,
+      "title": "LLM推理优化技术综述",
+      "description": "调研当前LLM推理优化的主流技术，包括但不限于：\n1. 量化（GPTQ、AWQ、GGUF）\n2. 推测解码（Speculative Decoding）\n3. Flash Attention / Paged Attention\n4. 批处理策略（Continuous Batching）\n5. KV Cache优化\n6. 模型蒸馏\n\n对每项技术：原理简述、性能提升幅度（有数据）、适用场景、成熟度评估。给出实际部署建议（中小规模，单GPU/多GPU推理）。",
+      "acceptance_criteria": [
+        "覆盖全部6类技术",
+        "每项技术有性能数据",
+        "成熟度评估合理",
+        "部署建议有场景针对性",
+        "引用最新论文/博客（2024-2025）"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "source_quality": 0.3
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "CODE",
+        "MATH"
+      ],
+      "expected_output_type": "technical_survey"
+    },
+    {
+      "id": "RESEARCH-003",
+      "domain": "RESEARCH",
+      "difficulty": 2,
+      "title": "竞品功能矩阵分析",
+      "description": "你的产品是AI Agent运行平台。分析以下竞品的功能矩阵：\n1. LangChain/LangGraph\n2. AutoGPT\n3. CrewAI\n4. Microsoft AutoGen\n5. Anthropic的Agent SDK\n\n维度：Agent定义方式、任务分解、记忆系统、人机协作、多Agent协调、可观测性、部署方式。\n输出功能矩阵表格+差异化机会分析。",
+      "acceptance_criteria": [
+        "功能矩阵覆盖所有维度和竞品",
+        "差异化机会不是泛泛而谈",
+        "对每个竞品的优劣势有具体判断",
+        "至少发现3个可行的差异化方向"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "insight_quality": 0.3
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "STRAT"
+      ],
+      "expected_output_type": "competitive_analysis"
+    },
+    {
+      "id": "RESEARCH-004",
+      "domain": "RESEARCH",
+      "difficulty": 5,
+      "title": "AGI评估体系调研",
+      "description": "调研当前AGI/LLM评估体系的最新进展。覆盖：\n1. 学术基准：MMLU、BIG-bench、ARC、HellaSwag等（说明各测什么、局限）\n2. 实际能力评估：SWE-bench、AgentBench、WebArena\n3. 人类评估方法：Chatbot Arena、比较判断\n4. 评估的元问题：基准泄漏、Goodhart's Law、评估与能力的gap\n\n重点关注：如何评估Agent系统的cognitive能力（不仅是模型能力），这对DeepSeek的AGI核心业务管培生面试可能有参考价值。",
+      "acceptance_criteria": [
+        "覆盖全部4个层面",
+        "每个基准有局限分析",
+        "Agent评估vs模型评估的区分清晰",
+        "对元问题（基准泄漏等）有深入讨论",
+        "结论部分提炼出面试可用的见解"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "completeness": 0.3,
+        "insight_quality": 0.4
+      },
+      "min_steps": 7,
+      "cross_domain": [
+        "STRAT",
+        "MATH"
+      ],
+      "expected_output_type": "research_report"
+    },
+    {
+      "id": "RESEARCH-005",
+      "domain": "RESEARCH",
+      "difficulty": 1,
+      "title": "技术文档调研：gRPC vs REST vs GraphQL",
+      "description": "为一个内部微服务通信场景（高吞吐、低延迟、强类型）调研gRPC、REST、GraphQL的适用性。\n输出：对比表格（性能、工具链、学习曲线、类型安全、调试体验、生态）、推荐方案。\n至少引用3个生产环境案例。",
+      "acceptance_criteria": [
+        "对比维度完整",
+        "推荐方案有场景针对性",
+        "引用了真实生产案例",
+        "考虑了中国互联网公司的主流选择"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "source_quality": 0.3
+      },
+      "min_steps": 3,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "comparison_report"
+    },
+    {
+      "id": "RESEARCH-006",
+      "domain": "RESEARCH",
+      "difficulty": 3,
+      "title": "开源项目的商业化路径研究",
+      "description": "研究5个成功的开源商业化案例：\n1. GitLab（open core）\n2. Confluent/Kafka（云服务）\n3. HashiCorp（BSL转换）\n4. Supabase（托管服务）\n5. Redis/Redis Labs（模块化）\n\n分析：每个案例的初始开源策略、转折点、商业模型演进、社区反应。\n提炼可复用的商业化路径决策框架。",
+      "acceptance_criteria": [
+        "5个案例均有具体时间线和事件",
+        "转折点分析有洞察",
+        "决策框架可操作",
+        "考虑了2024-2025年的最新发展"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "completeness": 0.3,
+        "insight_quality": 0.4
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "STRAT"
+      ],
+      "expected_output_type": "case_study_report"
+    },
+    {
+      "id": "RESEARCH-007",
+      "domain": "RESEARCH",
+      "difficulty": 4,
+      "title": "实时协作底层技术调研",
+      "description": "调研实现多人实时协作（类似Google Docs/Figma）的底层技术方案。\n覆盖：\n1. OT（Operational Transformation）的历史和现状\n2. CRDT的主流实现（Yjs、Automerge、Loro）\n3. 同步协议（WebSocket、WebRTC data channel）\n4. 冲突解决策略\n5. 离线支持和同步\n\n给出技术选型建议（Web应用，目标用户10万+）。",
+      "acceptance_criteria": [
+        "OT和CRDT的对比客观",
+        "至少3个CRDT库的对比",
+        "考虑了Web和移动端的差异",
+        "选型建议考虑了团队技术栈"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "source_quality": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "technical_survey"
+    },
+    {
+      "id": "RESEARCH-008",
+      "domain": "RESEARCH",
+      "difficulty": 2,
+      "title": "数据库选型决策树",
+      "description": "研究并输出一个数据库选型决策树（或决策矩阵）。覆盖至少10种数据库：\nPostgreSQL、MySQL、MongoDB、Redis、Elasticsearch、Cassandra、CockroachDB、Neo4j、ClickHouse、DuckDB、SQLite。\n\n输入条件：数据模型（关系/文档/图/时序/向量）、读写比例、一致性要求、扩展需求、运维能力。输出：推荐数据库+理由。",
+      "acceptance_criteria": [
+        "决策树逻辑完整",
+        "覆盖所有10+数据库",
+        "考虑了混合使用场景",
+        "推荐不教条（承认PostgreSQL可以覆盖很多场景）"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "practicality": 0.3
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE",
+        "STRAT"
+      ],
+      "expected_output_type": "decision_tree"
+    },
+    {
+      "id": "RESEARCH-009",
+      "domain": "RESEARCH",
+      "difficulty": 5,
+      "title": "DeepSeek技术栈深度调研",
+      "description": "深度调研DeepSeek的技术栈、架构决策和AGI战略。为面试准备。\n调研内容：\n1. DeepSeek的模型架构演进（V1→V2→V3，MoE设计）\n2. 训练基础设施和创新（通信优化、成本控制）\n3. 产品战略：开源vs API服务，目标用户群\n4. 组织和文化：团队结构、研究文化（参考公开访谈）\n5. 与OpenAI/Anthropic/Google的差异化定位\n6. 挑战和风险\n\n输出：结构化调研报告 + 面试中可引用的关键见解 + 可以提问的好问题。",
+      "acceptance_criteria": [
+        "架构演进分析准确",
+        "数据有来源支撑",
+        "差异化分析不夸大不贬低",
+        "见解可在面试中自然引用",
+        "问题展示深度思考"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "completeness": 0.3,
+        "insight_quality": 0.4
+      },
+      "min_steps": 7,
+      "cross_domain": [
+        "STRAT"
+      ],
+      "expected_output_type": "company_deep_dive"
+    },
+    {
+      "id": "RESEARCH-010",
+      "domain": "RESEARCH",
+      "difficulty": 3,
+      "title": "WebAssembly应用场景调研",
+      "description": "调研WebAssembly（Wasm）在浏览器外（non-browser）的应用场景和生态状态。\n聚焦:\n1. Serverless/FaaS中的Wasm\n2. 插件系统（如Envoy、Zed编辑器）\n3. 边缘计算\n4. 区块链智能合约\n\n评估Wasm在服务端的成熟度和未来2年的发展趋势。",
+      "acceptance_criteria": [
+        "4个场景都有具体案例分析",
+        "成熟度评估有依据",
+        "趋势预测有理有据",
+        "讨论了Wasm vs Docker的差异化定位"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "source_quality": 0.3
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE",
+        "STRAT"
+      ],
+      "expected_output_type": "technology_landscape"
+    },
+    {
+      "id": "RESEARCH-011",
+      "domain": "RESEARCH",
+      "difficulty": 1,
+      "title": "Python异步编程最佳实践",
+      "description": "调研Python异步编程（asyncio）的最佳实践和常见陷阱。\n覆盖：\n1. async/await使用模式\n2. 事件循环管理\n3. 并发vs并行的选择\n4. 第三方库兼容性（requests→httpx，同步ORM→异步ORM）\n5. 调试和性能分析工具\n\n输出：最佳实践指南 + 反模式清单。",
+      "acceptance_criteria": [
+        "覆盖5个方面",
+        "最佳实践有代码示例",
+        "反模式有具体例子说明危害",
+        "工具推荐有版本依据"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "practicality": 0.3
+      },
+      "min_steps": 3,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "best_practices_guide"
+    },
+    {
+      "id": "RESEARCH-012",
+      "domain": "RESEARCH",
+      "difficulty": 4,
+      "title": "Agent记忆系统技术调研",
+      "description": "调研AI Agent的记忆系统实现方案。覆盖：\n1. 工作记忆（上下文窗口管理、注意力机制）\n2. 短期记忆（会话内历史管理、摘要压缩）\n3. 长期记忆（向量存储、知识图谱、 episodic memory）\n4. 混合方案（MemGPT、Letta、Mem0等）\n5. 评估方法：如何衡量记忆系统的效果\n\n重点关注实际可部署的方案（而非学术原型），给出现有开源方案的对比。",
+      "acceptance_criteria": [
+        "覆盖全部5类记忆",
+        "开源方案对比有量化数据",
+        "评估方法有可操作性",
+        "部署建议务实"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "source_quality": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE",
+        "STRAT"
+      ],
+      "expected_output_type": "technical_survey"
+    },
+    {
+      "id": "RESEARCH-013",
+      "domain": "RESEARCH",
+      "difficulty": 3,
+      "title": "技术雷达：2025年值得关注的工具",
+      "description": "调研2025年值得关注的新兴开发工具和平台。按以下分类：\n1. AI辅助编程（超Codex/Copilot的下一代工具？）\n2. 基础设施（新的IaaS/PaaS范式）\n3. 数据库和数据工具\n4. 前端和全栈框架\n5. 可观测性和DevOps\n\n每个分类推荐1-3个工具，说明为什么值得关注、成熟度、采用风险。",
+      "acceptance_criteria": [
+        "每个分类有具体工具推荐",
+        "推荐有理有据（不是广告）",
+        "成熟度评估诚实",
+        "采用风险评估务实"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "completeness": 0.3,
+        "insight_quality": 0.4
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "STRAT"
+      ],
+      "expected_output_type": "tech_radar"
+    },
+    {
+      "id": "RESEARCH-014",
+      "domain": "RESEARCH",
+      "difficulty": 5,
+      "title": "AGI安全与对齐研究现状",
+      "description": "调研AGI安全（AI Safety）和对齐（Alignment）的当前研究状态。覆盖：\n1. 主要研究机构和团队（Anthropic、DeepMind、OpenAI、Conjecture、ARC等）\n2. 核心技术路线：RLHF、Constitutional AI、RRHF、Debate、Iterated Amplification\n3. 评估方法：红队测试、自动化对齐评估\n4. 治理和监管：EU AI Act、美国行政令、中国AI治理框架\n5. 争议和不同观点（e/acc vs 安全优先）\n\n对每个路线：理论依据、实际效果、局限。你的分析对DeepSeek面试中可能的AGI治理讨论有参考价值。",
+      "acceptance_criteria": [
+        "研究机构和路线覆盖全面",
+        "技术路线的分析准确",
+        "治理框架信息最新",
+        "争议呈现平衡（不站队）",
+        "面试可用见解独立标注"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "completeness": 0.3,
+        "insight_quality": 0.4
+      },
+      "min_steps": 7,
+      "cross_domain": [
+        "STRAT"
+      ],
+      "expected_output_type": "research_report"
+    },
+    {
+      "id": "RESEARCH-015",
+      "domain": "RESEARCH",
+      "difficulty": 2,
+      "title": "GitHub Actions vs GitLab CI vs Jenkins",
+      "description": "为一个小型团队（10人，GitHub托管代码）做CI/CD工具选型调研。\n比较：GitHub Actions、GitLab CI、Jenkins、CircleCI、Buildkite。\n评估：价格、配置复杂度、生态、与代码托管集成度、自托管能力。",
+      "acceptance_criteria": [
+        "对比表格完整",
+        "价格对比基于具体计划",
+        "考虑了团队规模",
+        "推荐与团队约束一致"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "practicality": 0.3
+      },
+      "min_steps": 3,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "comparison_report"
+    },
+    {
+      "id": "RESEARCH-016",
+      "domain": "RESEARCH",
+      "difficulty": 4,
+      "title": "多模态AI应用场景调研",
+      "description": "调研多模态AI（文本+图像+音频+视频）在商业场景中的应用现状。\n覆盖：\n1. 医疗影像分析\n2. 电商视觉搜索\n3. 文档智能处理（OCR+理解）\n4. 视频内容审核\n5. 多模态客服（图文混合理解）\n\n每个场景：当前技术成熟度、主要挑战、代表性产品/公司、市场前景。",
+      "acceptance_criteria": [
+        "5个场景都有深度分析",
+        "技术成熟度评估不夸大",
+        "挑战分析具体",
+        "市场数据有来源"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "source_quality": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "STRAT"
+      ],
+      "expected_output_type": "market_landscape"
+    },
+    {
+      "id": "RESEARCH-017",
+      "domain": "RESEARCH",
+      "difficulty": 3,
+      "title": "PostgreSQL扩展生态调研",
+      "description": "调研PostgreSQL的扩展生态，特别是让PostgreSQL胜任非传统关系型数据库场景的扩展。\n重点：\n1. PostGIS（地理空间）\n2. pgvector（向量搜索）\n3. TimescaleDB（时序数据）\n4. Citus（分布式）\n5. pg_cron + pg_partman（运维自动化）\n6. AGE（图数据库）\n\n每个扩展：功能、成熟度、性能、适用场景。回答：PostgreSQL能替代多少专用数据库？",
+      "acceptance_criteria": [
+        "6个扩展都有深度分析",
+        "性能数据有来源",
+        "对替代性问题的回答客观平衡",
+        "指出了PostgreSQL的局限场景"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "source_quality": 0.3
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "ecosystem_survey"
+    }
+  ]
+}

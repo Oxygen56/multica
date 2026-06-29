@@ -1,0 +1,393 @@
+{
+  "domain": "MATH",
+  "task_count": 17,
+  "tasks": [
+    {
+      "id": "MATH-001",
+      "domain": "MATH",
+      "difficulty": 2,
+      "title": "概率问题：骰子游戏期望值",
+      "description": "你玩一个游戏：掷三个公平六面骰子。如果三个骰子点数相同（三条），获得100元。如果恰好两个骰子点数相同（一对），获得10元。如果三个都不同，输掉5元。\n1. 计算这个游戏的期望值\n2. 确定是否值得玩\n3. 如果要使游戏公平（期望值为0），三条的奖金应该是多少（保持其他不变）？\n给出完整计算过程。",
+      "acceptance_criteria": [
+        "期望值计算过程和结果正确",
+        "判断是否值得玩的逻辑正确",
+        "奖金调整计算正确",
+        "步骤清晰可验证"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 3,
+      "cross_domain": [],
+      "expected_output_type": "math_solution"
+    },
+    {
+      "id": "MATH-002",
+      "domain": "MATH",
+      "difficulty": 3,
+      "title": "算法复杂度分析",
+      "description": "分析以下算法的精确时间复杂度（非渐进），并给出简化的大O表示：\n\n算法A：对于输入数组A[0..n-1]，嵌套循环 i从0到n-1，j从i到n-1（步长×2），内部执行O(1)操作。\n算法B：递归T(n)=3T(n/2)+n^2，T(1)=1。\n算法C：对于每个长度为k的子串（共n-k+1个），调用O(k)的验证函数。\n\n对每个算法：1. 建立递推式或求和式 2. 求解 3. 给出大O 4. 举例说明n=100时的操作次数估算。",
+      "acceptance_criteria": [
+        "三个算法的时间复杂度推导正确",
+        "递推式/求和式建模正确",
+        "n=100时的数值估算合理",
+        "大O表示正确"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "math_solution"
+    },
+    {
+      "id": "MATH-003",
+      "domain": "MATH",
+      "difficulty": 4,
+      "title": "图论：网络可靠性分析",
+      "description": "一个通信网络由9个节点和14条边构成。网络的结构如下（邻接表）：\n0:[1,2,3], 1:[0,4,5], 2:[0,5,6], 3:[0,6], 4:[1,7], 5:[1,2,7,8], 6:[2,3,8], 7:[4,5], 8:[5,6]\n\n1. 该网络的最小割大小是多少？（即最少切断几条边可以使网络分成两个不连通部分）\n2. 如果每条边独立以概率p=0.01失效，网络保持连通的概率是多少？（给出计算方法和近似值）\n3. 如果要使网络连通概率>0.999，每条边的可靠性需要达到多少？（假设独立同分布）\n\n可以使用算法描述，不需要精确数值计算。",
+      "acceptance_criteria": [
+        "最小割计算正确",
+        "连通概率的计算方法正确",
+        "可靠性要求推导合理",
+        "步骤可复现"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "math_solution"
+    },
+    {
+      "id": "MATH-004",
+      "domain": "MATH",
+      "difficulty": 1,
+      "title": "贝叶斯推理应用",
+      "description": "一个医疗检测的准确率为99%（有病测出阳性的概率）和99%的特异性（没病测出阴性的概率）。\n该病在人群中的发病率为0.1%。\n1. 如果一个随机的人检测出阳性，他实际患病的概率是多少？\n2. 如果检测两次（独立），两次都是阳性，患病的概率是多少？\n3. 如果发病率变为1%，第一次阳性后的患病概率变化到多少？\n\n给出完整贝叶斯公式推导。",
+      "acceptance_criteria": [
+        "贝叶斯公式应用正确",
+        "三次计算全部正确",
+        "推导步骤完整",
+        "用自然语言解释结果（非仅数学符号）"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 3,
+      "cross_domain": [],
+      "expected_output_type": "math_solution"
+    },
+    {
+      "id": "MATH-005",
+      "domain": "MATH",
+      "difficulty": 4,
+      "title": "设计一致性哈希算法",
+      "description": "设计一致性哈希（Consistent Hashing）的完整数学方案。\n要求：\n1. 定义哈希环的数学结构\n2. 给出节点添加/删除时的数据迁移量公式\n3. 引入虚拟节点后的负载均衡分析：N个节点各K个虚拟节点，负载方差是多少？\n4. 证明当K趋于无穷时负载趋于均匀\n\n给出严谨的数学分析和算法伪代码。",
+      "acceptance_criteria": [
+        "哈希环的数学定义正确",
+        "数据迁移量公式推导正确",
+        "负载方差分析有数学支撑",
+        "均匀性证明逻辑正确"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "math_with_pseudocode"
+    },
+    {
+      "id": "MATH-006",
+      "domain": "MATH",
+      "difficulty": 3,
+      "title": "排序算法的信息论下界",
+      "description": "从信息论角度分析基于比较的排序算法的下界。\n1. 证明：任何基于比较的排序算法在最坏情况下至少需要ceil(log2(n!))次比较\n2. 用Stirling近似计算n=100时的下界\n3. 解释堆排序的O(n log n)为什么接近这个下界\n4. 讨论：非比较排序（如基数排序）为什么能突破这个下界？",
+      "acceptance_criteria": [
+        "下界证明完整",
+        "Stirling近似应用正确",
+        "堆排序分析准确",
+        "非比较排序的解释正确"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "math_proof"
+    },
+    {
+      "id": "MATH-007",
+      "domain": "MATH",
+      "difficulty": 5,
+      "title": "设计分布式共识算法的正确性证明",
+      "description": "为简化的Paxos协议（单实例，多proposer）给出正确性证明。\n证明必须包括：\n1. 安全性（Safety）证明：最多一个值被chosen\n2. 活性（Liveness）条件分析：在什么条件下协议保证终止？\n3. 反例构造：如果去掉某个约束，安全性能被违反的构造例子\n\n使用归纳法和反证法，给出形式化证明。",
+      "acceptance_criteria": [
+        "安全性证明形式正确",
+        "活性分析准确",
+        "反例构造有效",
+        "归纳法/反证法使用恰当"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "formal_proof"
+    },
+    {
+      "id": "MATH-008",
+      "domain": "MATH",
+      "difficulty": 2,
+      "title": "线性规划建模",
+      "description": "一个云服务提供商需要在3个地区部署服务器来满足5个客户区域的需求。\n已知：\n- 服务器成本（每台/月）：地区1=100, 地区2=120, 地区3=90\n- 每台服务器可处理1000请求/秒\n- 5个客户区域的需求（请求/秒）：3000, 2500, 4000, 1500, 2000\n- 延迟约束：某些服务器-客户配对不可用（延迟过高）\n\n1. 建立整数线性规划模型（ILP）\n2. 如果延迟约束为：服务器1不能服务客户3和5，服务器2不能服务客户1，服务器3无限制，求最优解\n3. 分析LP松弛的解与整数解的差距",
+      "acceptance_criteria": [
+        "ILP建模正确",
+        "最优解计算正确",
+        "松弛分析合理",
+        "步骤清晰"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "optimization_solution"
+    },
+    {
+      "id": "MATH-009",
+      "domain": "MATH",
+      "difficulty": 3,
+      "title": "马尔可夫链稳态分布",
+      "description": "一个Agent在3个状态(s1,s2,s3)间转移，转移矩阵为：\nP = [[0.3,0.5,0.2],[0.4,0.3,0.3],[0.1,0.6,0.3]]\n\n1. 计算稳态分布π（即πP=π）\n2. 从初始状态s1出发，经过3步后在s2的概率\n3. 该马尔可夫链的混合时间（mixing time）大约是多少？（可近似估算）\n4. 如果Agent在s2时获得reward=10，s1 reward=0，s3 reward=-5，长期平均reward是多少？",
+      "acceptance_criteria": [
+        "稳态分布计算正确",
+        "3步转移概率正确",
+        "混合时间估算合理",
+        "长期平均reward正确"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "math_solution"
+    },
+    {
+      "id": "MATH-010",
+      "domain": "MATH",
+      "difficulty": 4,
+      "title": "布隆过滤器的假阳性率分析",
+      "description": "设计一个布隆过滤器用于10亿个URL的去重。\n1. 给定假阳性率目标p=0.001，计算最优位数组大小m和哈希函数数量k\n2. 推导假阳性率公式：p ≈ (1 - e^(-kn/m))^k 的数学过程\n3. 分析：当插入元素数量从10亿增长到15亿（超出设计容量），假阳性率如何变化？\n4. 如果内存限制为1GB，能达到的最低假阳性率是多少？",
+      "acceptance_criteria": [
+        "公式推导完整",
+        "参数计算正确",
+        "超容量分析正确",
+        "内存限制下的计算正确"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "math_analysis"
+    },
+    {
+      "id": "MATH-011",
+      "domain": "MATH",
+      "difficulty": 1,
+      "title": "递归关系求解",
+      "description": "求解以下递推式：\n1. T(n) = T(n-1) + n, T(1)=1\n2. T(n) = 2T(n/2) + n log n, T(1)=1（主定理）\n3. T(n) = T(n/3) + T(2n/3) + n, T(1)=1\n\n对每个递推式：给出求解过程和最终闭合形式，并证明你的答案是正确性（代入验证或归纳法）。",
+      "acceptance_criteria": [
+        "三个递推式求解正确",
+        "证明方法合理",
+        "最终闭合形式正确",
+        "步骤清晰"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 3,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "math_solution"
+    },
+    {
+      "id": "MATH-012",
+      "domain": "MATH",
+      "difficulty": 5,
+      "title": "零知识证明的数学基础",
+      "description": "用数学语言描述零知识证明（ZKP）的三个性质：完备性、可靠性、零知识性。\n给出一个具体的ZKP协议示例（如Schnorr协议或图同构问题的ZKP）：\n1. 协议步骤描述\n2. 完备性证明\n3. 可靠性证明（soundness error计算）\n4. 零知识性（构造模拟器）\n\n使用形式化数学语言，但添加直观解释。",
+      "acceptance_criteria": [
+        "三个性质的定义准确",
+        "协议描述清晰",
+        "三个证明逻辑正确",
+        "直观解释帮助理解"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "formal_proof"
+    },
+    {
+      "id": "MATH-013",
+      "domain": "MATH",
+      "difficulty": 2,
+      "title": "随机采样算法设计",
+      "description": "设计一个从数据流中均匀随机采样k个元素的算法（Reservoir Sampling）。\n1. 给出算法伪代码\n2. 用归纳法证明每个元素被选中的概率为k/n\n3. 扩展到加权采样（每个元素有weight w_i）\n4. 如果数据流无限（n未知），算法还能保证均匀性吗？",
+      "acceptance_criteria": [
+        "算法伪代码正确",
+        "归纳证明完整",
+        "加权扩展正确",
+        "无限流分析正确"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "math_with_pseudocode"
+    },
+    {
+      "id": "MATH-014",
+      "domain": "MATH",
+      "difficulty": 3,
+      "title": "信息熵与决策树",
+      "description": "给定以下二分类数据集，手动构建最优决策树（使用信息增益作为分裂标准）：\n\n10个样本，2个特征(X1,X2)，1个标签(Y)。数据如下：\n(0,0)→0, (0,1)→0, (0,0)→1, (1,0)→0, (1,1)→1,\n(1,0)→1, (0,1)→1, (1,1)→0, (0,0)→0, (1,1)→1\n\n1. 计算根节点的熵\n2. 计算每个特征的信息增益\n3. 选择根节点分裂特征\n4. 递归完成整个树\n5. 计算决策树对训练数据的准确率",
+      "acceptance_criteria": [
+        "熵计算正确",
+        "信息增益计算正确",
+        "树结构正确",
+        "准确率计算正确"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "math_solution"
+    },
+    {
+      "id": "MATH-015",
+      "domain": "MATH",
+      "difficulty": 4,
+      "title": "排队论在系统设计中的应用",
+      "description": "一个API服务处理请求，请求到达服从泊松过程（λ=100 req/s），每个请求处理时间服从指数分布（均值=8ms）。\n\n1. 建模为M/M/1队列，计算：平均队列长度、平均等待时间、利用率\n2. 如果延迟SLA要求P99<50ms，当前配置满足吗？\n3. 需要增加多少服务器（M/M/c）才能确保P99<30ms？\n4. 讨论M/M/c模型在实际系统中的局限性（至少3点）",
+      "acceptance_criteria": [
+        "M/M/1计算正确",
+        "SLA分析正确",
+        "M/M/c服务器数量估算合理",
+        "局限性分析有深度"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "math_analysis"
+    },
+    {
+      "id": "MATH-016",
+      "domain": "MATH",
+      "difficulty": 5,
+      "title": "计算复杂性理论证明",
+      "description": "证明以下命题：\n1. 3-SAT属于NP完全（概述Cook-Levin定理的证明思路）\n2. 证明子图同构（Subgraph Isomorphism）是NP完全的（归约自Clique）\n3. 证明2-SAT属于P（给出多项式时间算法）\n\n对每个命题：给出严谨的证明结构，层次清晰。使用标准复杂度理论符号。",
+      "acceptance_criteria": [
+        "3-SAT的NP完全证明思路正确",
+        "归约正确（Clique≤子图同构）",
+        "2-SAT的多项式算法正确",
+        "证明结构严谨"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "formal_proof"
+    },
+    {
+      "id": "MATH-017",
+      "domain": "MATH",
+      "difficulty": 3,
+      "title": "HyperLogLog基数估计",
+      "description": "分析HyperLogLog算法的数学原理：\n1. 推导：为什么最长连续零位的期望可以估计基数？\n2. 证明：n个随机二进制字符串中，最长连续零位≥k的概率\n3. HLL中使用的调和平均与几何平均/算术平均的区别和优劣\n4. 计算：标准HLL（2^14=16384个桶）在计数到1亿时的相对误差",
+      "acceptance_criteria": [
+        "推导过程正确",
+        "概率计算正确",
+        "调和平均的分析正确",
+        "误差计算在合理范围"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.7,
+        "completeness": 0.2,
+        "clarity": 0.1
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "math_analysis"
+    }
+  ]
+}

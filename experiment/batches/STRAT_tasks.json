@@ -1,0 +1,417 @@
+{
+  "domain": "STRAT",
+  "task_count": 17,
+  "tasks": [
+    {
+      "id": "STRAT-001",
+      "domain": "STRAT",
+      "difficulty": 3,
+      "title": "技术栈选型决策",
+      "description": "一个创业团队（5名开发者）要构建一个实时协作的Web应用（类似Figma的简化版）。\n需要做以下技术选型决策：\n1. 前端框架：React vs Vue vs Svelte\n2. 后端：Node.js vs Go vs Python(FastAPI)\n3. 数据库：PostgreSQL vs MongoDB vs CockroachDB\n4. 实时通信：WebSocket vs WebRTC vs Server-Sent Events\n5. 部署：Kubernetes vs Docker Compose vs Vercel/Railway\n\n对每个维度给出推荐方案+理由+风险分析。考虑团队规模和产品特性。",
+      "acceptance_criteria": [
+        "每个维度都有明确的推荐和理由",
+        "考虑了团队规模（5人）的约束",
+        "考虑了实时协作的技术特点",
+        "至少分析了2个备选方案的风险"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "reasoning_quality": 0.4,
+        "practicality": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "RESEARCH",
+        "CODE"
+      ],
+      "expected_output_type": "decision_memo"
+    },
+    {
+      "id": "STRAT-002",
+      "domain": "STRAT",
+      "difficulty": 4,
+      "title": "微服务拆分边界决策",
+      "description": "一个电商Monolith（订单、商品、用户、支付、物流、营销6个模块）正在考虑微服务化。\n当前痛点：订单模块变更频繁影响其他模块，部署耦合严重。\n\n请给出：\n1. 微服务拆分方案（哪些模块先拆、拆成几个服务）\n2. 拆分顺序和优先级\n3. 数据一致性策略\n4. 不要拆分的情况/理由\n5. 与「继续优化Monolith」方案的对比分析",
+      "acceptance_criteria": [
+        "拆分方案有清晰的边界定义",
+        "拆分顺序有逻辑支撑",
+        "数据一致性策略具体",
+        "客观评估了不拆分的选项",
+        "给出至少3个拆分决策原则"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "reasoning_quality": 0.4,
+        "practicality": 0.3
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "CODE",
+        "DESIGN"
+      ],
+      "expected_output_type": "analysis_report"
+    },
+    {
+      "id": "STRAT-003",
+      "domain": "STRAT",
+      "difficulty": 2,
+      "title": "开源协议选择",
+      "description": "你要把一个内部工具开源。该工具是一个CLI开发效率工具，你希望：\n1. 最大化社区采用\n2. 防止云厂商打包成SaaS服务与你竞争\n3. 允许企业用户内部使用但不允许修改后闭源分发\n4. 个人开发者和小公司免费使用\n\n给出开源协议建议（从MIT/Apache2/GPLv3/AGPLv3/BSL/Elastic License中选择），解释每种协议的适用性和不适用原因。",
+      "acceptance_criteria": [
+        "给出明确的主推荐协议",
+        "分析了所有6种协议的适用性",
+        "考虑了防止云厂商竞争的需求",
+        "解释了推荐协议的权衡"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "reasoning_quality": 0.4,
+        "practicality": 0.2
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "RESEARCH"
+      ],
+      "expected_output_type": "decision_memo"
+    },
+    {
+      "id": "STRAT-004",
+      "domain": "STRAT",
+      "difficulty": 5,
+      "title": "AGI架构设计决策",
+      "description": "你在设计一个AGI agent运行平台。需要在以下维度做决策：\n1. Agent间通信：消息队列 vs 共享内存 vs 事件总线\n2. 记忆系统：向量数据库 vs 图谱数据库 vs 文件系统\n3. 任务分解：静态DAG vs LLM动态分解 vs 混合\n4. 安全边界：沙箱隔离 vs 权限系统 vs 审计日志\n5. 扩展策略：插件系统 vs 标准化API vs Agent即代码\n\n对于每个维度，给出你的推荐方案、设计原则和关键权衡。考虑长期演进（5-10年），不限于当前技术限制。",
+      "acceptance_criteria": [
+        "每个维度有明确推荐和设计原则",
+        "考虑了长期演进（5-10年）",
+        "每个决策有清晰的trade-off分析",
+        "总体架构一致（各决策相互协调）"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "reasoning_quality": 0.5,
+        "vision": 0.2
+      },
+      "min_steps": 7,
+      "cross_domain": [
+        "RESEARCH",
+        "CODE",
+        "DESIGN"
+      ],
+      "expected_output_type": "architecture_decision_record"
+    },
+    {
+      "id": "STRAT-005",
+      "domain": "STRAT",
+      "difficulty": 3,
+      "title": "技术债务管理策略",
+      "description": "一个运行3年的SaaS产品累积了大量技术债务：\n- 30%代码无测试覆盖\n- 有3个已EOL的依赖\n- 数据库Schema有5个历史遗留的冗余字段\n- 日志系统混乱（3种不同格式）\n- CI/CD pipeline平均耗时45分钟\n\n你的团队有8名开发者，每两周一个sprint。产品团队同时要求新功能开发不减速。\n设计一个技术债务偿还策略，给出优先级排序和具体执行计划。",
+      "acceptance_criteria": [
+        "优先级排序有清晰标准",
+        "执行计划具体到可操作层面",
+        "平衡了新功能开发和还债",
+        "给出了度量改进的指标"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "reasoning_quality": 0.4,
+        "practicality": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "RESEARCH"
+      ],
+      "expected_output_type": "strategy_doc"
+    },
+    {
+      "id": "STRAT-006",
+      "domain": "STRAT",
+      "difficulty": 4,
+      "title": "数据迁移策略",
+      "description": "你需要将100TB的生产数据从一个云提供商迁移到另一个，要求：\n1. 停机时间<5分钟\n2. 数据完整性100%\n3. 迁移过程中服务可读\n4. 可回滚到源端\n\n数据包括：PostgreSQL(2TB)、Elasticsearch(5TB)、S3对象存储(93TB)。\n设计完整迁移方案，包括时间线估算。",
+      "acceptance_criteria": [
+        "迁移步骤完整且顺序合理",
+        "停机时间分析符合要求",
+        "回滚方案具体可操作",
+        "数据完整性验证方案存在",
+        "时间估算有依据"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "reasoning_quality": 0.3,
+        "practicality": 0.3
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "CODE",
+        "RESEARCH"
+      ],
+      "expected_output_type": "migration_plan"
+    },
+    {
+      "id": "STRAT-007",
+      "domain": "STRAT",
+      "difficulty": 2,
+      "title": "第三方服务依赖风险评估",
+      "description": "你的产品依赖以下第三方服务：\n1. Auth0（认证）2. Stripe（支付）3. SendGrid（邮件）\n4. Mapbox（地图）5. AWS S3（存储）6. GitHub API（代码集成）\n\n请评估每个依赖的风险等级（高/中/低），给出风险缓解策略，并为高风险依赖设计fallback方案。",
+      "acceptance_criteria": [
+        "每个依赖有风险等级评估和理由",
+        "高风险依赖有具体fallback方案",
+        "考虑了供应商锁定和定价变更风险",
+        "考虑了合规/数据隐私风险"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "reasoning_quality": 0.4,
+        "practicality": 0.3
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "RESEARCH"
+      ],
+      "expected_output_type": "risk_assessment"
+    },
+    {
+      "id": "STRAT-008",
+      "domain": "STRAT",
+      "difficulty": 5,
+      "title": "构建vs购买vs开源决策框架",
+      "description": "设计一个通用决策框架，用于决定一个软件组件应该自建（Build）、购买（Buy）还是使用开源（Open Source）。\n框架应包含：\n1. 评估维度（至少8个）\n2. 每个维度的权重建议\n3. 评分方法\n4. 边界条件（什么情况下自动排除某个选项）\n\n用以下两个案例验证你的框架：\nA. CI/CD平台（团队50人）\nB. 日志分析系统（团队5人，预算有限）",
+      "acceptance_criteria": [
+        "评估维度至少8个且相互独立",
+        "评分方法可操作",
+        "边界条件定义清晰",
+        "两个案例的评估结果合理",
+        "框架本身简单易用"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "reasoning_quality": 0.4,
+        "practicality": 0.3
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "DESIGN",
+        "RESEARCH"
+      ],
+      "expected_output_type": "decision_framework"
+    },
+    {
+      "id": "STRAT-009",
+      "domain": "STRAT",
+      "difficulty": 3,
+      "title": "灰度发布策略",
+      "description": "你负责一个日活1000万用户的社交App后端。需要上线一个重构的推荐算法（完全替换旧算法）。\n设计灰度发布策略，考虑：\n1. 用户分桶策略\n2. 回滚条件和自动化\n3. 监控指标和告警阈值\n4. A/B实验设计（确保统计显著性）\n5. 逐步放量的时间线\n\n特别注意：新旧算法的结果不能混合，同一用户必须在同一个桶中。",
+      "acceptance_criteria": [
+        "分桶策略保证用户一致性",
+        "回滚条件自动化且具体",
+        "监控指标覆盖业务和技术维度",
+        "A/B设计有样本量计算",
+        "时间线合理"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "reasoning_quality": 0.3,
+        "practicality": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "MATH",
+        "CODE"
+      ],
+      "expected_output_type": "rollout_plan"
+    },
+    {
+      "id": "STRAT-010",
+      "domain": "STRAT",
+      "difficulty": 4,
+      "title": "On-Call事件响应流程设计",
+      "description": "为一个25人的工程团队设计On-Call事件响应流程。背景：\n- 服务可用性目标：99.9%\n- 平均每月发生5次P1/P2事件\n- 团队分布在2个时区\n- 现有监控覆盖：基础设施metrics、APM、日志聚合\n\n设计内容：\n1. 事件分级标准（P1-P4）\n2. 值班轮换制度\n3. 升级路径\n4. 事后复盘流程\n5. 衡量指标",
+      "acceptance_criteria": [
+        "分级标准明确可操作",
+        "轮换制度考虑时区差异",
+        "升级路径覆盖所有严重级别",
+        "复盘流程有模板",
+        "指标可衡量且不鼓励错误行为"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "reasoning_quality": 0.4,
+        "practicality": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "DESIGN"
+      ],
+      "expected_output_type": "process_doc"
+    },
+    {
+      "id": "STRAT-011",
+      "domain": "STRAT",
+      "difficulty": 2,
+      "title": "API版本管理策略",
+      "description": "你的平台对外提供REST API，已有50个第三方集成在使用v1版本。现在需要做破坏性变更。\n设计API版本管理策略，包括：\n1. 版本标识方案（URL路径 vs Header vs 媒体类型）\n2. 废弃(v1)的时间线和通知机制\n3. 向后兼容的边界定义\n4. API变更的分类（哪些算破坏性，哪些不算）",
+      "acceptance_criteria": [
+        "版本标识方案有理由支撑",
+        "废弃时间线对第三方合理",
+        "破坏性变更定义清晰",
+        "考虑了SemVer和API版本的关系"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "reasoning_quality": 0.4,
+        "practicality": 0.3
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE",
+        "DESIGN"
+      ],
+      "expected_output_type": "strategy_doc"
+    },
+    {
+      "id": "STRAT-012",
+      "domain": "STRAT",
+      "difficulty": 5,
+      "title": "平台战略：开放vs封闭",
+      "description": "你在运营一个AI Agent平台（类似Multica）。需要决定平台开放策略：\n1. 完全开放API → 吸引开发者但可能被竞品利用\n2. 半开放（认证开发者）→ 生态可控但增长慢\n3. 封闭生态（官方Agent only）→ 质量可控但天花板低\n\n做全面分析，给出分阶段建议。考虑：开发者生态、商业模型、技术壁垒、数据飞轮。",
+      "acceptance_criteria": [
+        "三种模式的优劣分析完整",
+        "分阶段建议具体",
+        "考虑商业模型可持续性",
+        "分析了数据飞轮效应",
+        "给出可逆决策和不可逆决策的区分"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.2,
+        "reasoning_quality": 0.5,
+        "vision": 0.3
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "RESEARCH",
+        "DESIGN"
+      ],
+      "expected_output_type": "strategy_paper"
+    },
+    {
+      "id": "STRAT-013",
+      "domain": "STRAT",
+      "difficulty": 3,
+      "title": "安全事件响应计划",
+      "description": "为你的SaaS产品设计安全事件响应计划（SIRP）。场景：发现了生产数据库被未授权访问的迹象。\n设计：\n1. 检测到确认的时间线（前15分钟做什么）\n2. 遏制措施\n3. 取证流程\n4. 通知义务（用户、监管）\n5. 恢复和加固",
+      "acceptance_criteria": [
+        "时间线覆盖T0到T+72h",
+        "遏制措施具体可立即执行",
+        "取证流程不破坏证据",
+        "考虑了GDPR/CCPA等通知义务",
+        "恢复后加固措施具体"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "reasoning_quality": 0.4,
+        "practicality": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "RESEARCH"
+      ],
+      "expected_output_type": "incident_response_plan"
+    },
+    {
+      "id": "STRAT-014",
+      "domain": "STRAT",
+      "difficulty": 4,
+      "title": "多产品线资源分配",
+      "description": "你的公司有3个产品线：\nA. 成熟产品（占收入70%，增长5%/年）\nB. 成长产品（占收入25%，增长40%/年）\nC. 探索产品（占收入5%，增长100%/年，但绝对值小）\n\n你有50名工程师。设计资源分配方案和决策理由。需考虑2年后的产品组合目标。",
+      "acceptance_criteria": [
+        "分配方案有数字支撑",
+        "考虑了长期战略而不仅是短期收入",
+        "三个产品线有不同的人力策略",
+        "考虑了人员流动和知识传承"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.2,
+        "reasoning_quality": 0.5,
+        "practicality": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "MATH"
+      ],
+      "expected_output_type": "resource_allocation_plan"
+    },
+    {
+      "id": "STRAT-015",
+      "domain": "STRAT",
+      "difficulty": 2,
+      "title": "什么时候该重写而不是重构",
+      "description": "设计一个决策框架，帮助技术负责人判断一个系统是应该重写（Rewrite）还是重构（Refactor）。\n必须包含：\n1. 评估维度\n2. 定性/定量指标\n3. 决策树\n4. 至少3个已知案例（如Netscape重写失败、Basecamp重构成功等）",
+      "acceptance_criteria": [
+        "评估维度覆盖技术/业务/人员",
+        "决策树逻辑清晰",
+        "案例分析与框架一致",
+        "考虑了渐进重写（Strangler Fig）作为中间选项"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "reasoning_quality": 0.4,
+        "practicality": 0.3
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "RESEARCH",
+        "CODE"
+      ],
+      "expected_output_type": "decision_framework"
+    },
+    {
+      "id": "STRAT-016",
+      "domain": "STRAT",
+      "difficulty": 5,
+      "title": "技术组织架构设计",
+      "description": "为一个150人的技术组织设计团队拓扑。业务场景：\n- 3条产品线（B2B SaaS、B2C App、API平台）\n- 共享基础设施（认证、支付、通知、日志）\n- 需要保持快速迭代（周级发布）同时保证平台稳定性\n\n设计团队结构、职责划分、协作接口。参考Team Topologies方法论。",
+      "acceptance_criteria": [
+        "团队拓扑符合Team Topologies原则",
+        "共享基础设施的治理模式明确",
+        "协作接口定义清晰",
+        "考虑了Conway's Law的影响",
+        "150人的规模假设合理"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "reasoning_quality": 0.4,
+        "practicality": 0.3
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "DESIGN"
+      ],
+      "expected_output_type": "org_design_doc"
+    },
+    {
+      "id": "STRAT-017",
+      "domain": "STRAT",
+      "difficulty": 3,
+      "title": "定价模型设计",
+      "description": "为你的AI Agent平台设计定价模型。产品特点：\n- 按Agent运行时间计费（类似计算资源）\n- 客户从个人开发者到企业团队\n- 竞争对手按subscription收费\n\n设计：\n1. 定价维度（什么该收费什么不该）\n2. 分层方案\n3. Free tier设计（吸引用户vs防止滥用）\n4. 企业定价策略",
+      "acceptance_criteria": [
+        "定价维度逻辑清晰",
+        "分层方案覆盖目标客户段",
+        "Free tier有防滥用机制",
+        "考虑了land-and-expand策略",
+        "与竞品的差异分析合理"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "reasoning_quality": 0.4,
+        "practicality": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "RESEARCH",
+        "MATH"
+      ],
+      "expected_output_type": "pricing_strategy"
+    }
+  ]
+}

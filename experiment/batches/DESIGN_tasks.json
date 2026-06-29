@@ -1,0 +1,407 @@
+{
+  "domain": "DESIGN",
+  "task_count": 16,
+  "tasks": [
+    {
+      "id": "DESIGN-001",
+      "domain": "DESIGN",
+      "difficulty": 3,
+      "title": "设计URL短链系统",
+      "description": "设计一个URL短链服务（类似bit.ly），要求：\n1. 支持每天生成1000万个短链\n2. 短链长度不超过7个字符\n3. 支持自定义短链（用户指定别名）\n4. 支持访问统计（点击次数、地域、设备）\n5. 高可用（3个9）\n\n给出：架构图（文字描述）、数据库设计、API设计、关键算法。讨论短链生成算法（哈希vs自增ID编码）的权衡。",
+      "acceptance_criteria": [
+        "架构覆盖所有功能需求",
+        "数据库设计合理且有扩展性分析",
+        "API设计RESTful",
+        "短链生成算法的权衡分析完整",
+        "容量估算合理"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.4,
+        "completeness": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE",
+        "MATH"
+      ],
+      "expected_output_type": "system_design_doc"
+    },
+    {
+      "id": "DESIGN-002",
+      "domain": "DESIGN",
+      "difficulty": 4,
+      "title": "设计实时聊天系统",
+      "description": "设计一个支持百万级同时在线的实时聊天系统（类似Discord/微信）。\n核心功能：\n1. 一对一聊天\n2. 群聊（最多500人）\n3. 消息已读/未读状态\n4. 离线消息推送\n5. 消息历史搜索\n\n给出：整体架构、消息流转过程、存储方案（消息/图片/文件不同的存储策略）、扩展方案。特别讨论：如何保证消息有序性和幂等性。",
+      "acceptance_criteria": [
+        "架构选型合理",
+        "消息有序性和幂等性方案正确",
+        "存储分层策略合理",
+        "扩展方案可操作",
+        "考虑了网络不稳定场景"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.4,
+        "completeness": 0.3
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "CODE",
+        "STRAT"
+      ],
+      "expected_output_type": "system_design_doc"
+    },
+    {
+      "id": "DESIGN-003",
+      "domain": "DESIGN",
+      "difficulty": 2,
+      "title": "设计RESTful API",
+      "description": "为一个任务管理系统设计完整的RESTful API。资源包括：\n项目（Project）、任务（Task）、评论（Comment）、标签（Label）、用户（User）。\n\n要求：\n1. 完整的CRUD端点\n2. 嵌套资源的设计（如项目下的任务）\n3. 分页、排序、过滤\n4. 错误码和错误响应格式\n5. API版本管理\n\n输出完整API文档（OpenAPI/Swagger格式或等价的详细文档）。",
+      "acceptance_criteria": [
+        "API端点完整且RESTful",
+        "嵌套资源设计合理",
+        "分页排序过滤设计标准",
+        "错误处理完整",
+        "文档格式规范"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.4,
+        "completeness": 0.3
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "api_design_doc"
+    },
+    {
+      "id": "DESIGN-004",
+      "domain": "DESIGN",
+      "difficulty": 5,
+      "title": "设计可扩展的AGI Agent架构",
+      "description": "设计一个通用的AGI Agent运行时架构。核心约束：\n1. 支持多级Agent层次（执行Agent→专家Agent→总管→元认知）\n2. 可插拔的记忆系统（工作记忆、情景记忆、语义记忆）\n3. Agent间通信协议（同步RPC+异步消息）\n4. 工具/能力注册和发现\n5. 安全沙箱和资源限制\n6. 可观测性（Agent行为日志、决策追溯、性能监控）\n\n给出完整架构设计。这不是玩具设计——要考虑Multi-agent协调中的死锁、活锁、资源竞争、部分失败等分布式系统挑战。这是一个对DeepSeek面试有参考价值的系统设计题。",
+      "acceptance_criteria": [
+        "架构层次定义清晰且合理",
+        "记忆系统插拔设计可行",
+        "通信协议考虑了容错",
+        "安全沙箱方案可行",
+        "可观测性设计完整",
+        "讨论了分布式挑战的解决方案"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.4,
+        "innovation": 0.3
+      },
+      "min_steps": 7,
+      "cross_domain": [
+        "STRAT",
+        "CODE",
+        "RESEARCH"
+      ],
+      "expected_output_type": "architecture_design_doc"
+    },
+    {
+      "id": "DESIGN-005",
+      "domain": "DESIGN",
+      "difficulty": 3,
+      "title": "设计通知系统",
+      "description": "为一个SaaS平台设计统一通知系统。需求：\n1. 多渠道：站内通知、邮件、短信、Webhook、Slack/钉钉/飞书集成\n2. 用户可配置通知偏好（哪个渠道、什么事件类型）\n3. 通知聚合（如5分钟内的同类通知合并为一条摘要）\n4. 高可靠（通知不能丢失）\n5. 模板管理（支持多语言）\n\n给出：架构设计、数据库模型、通知生命周期、重试和削峰策略。",
+      "acceptance_criteria": [
+        "多渠道抽象设计合理",
+        "用户偏好模型灵活",
+        "聚合策略可行",
+        "可靠性保证措施明确",
+        "模板管理系统设计合理"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.4,
+        "completeness": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE",
+        "STRAT"
+      ],
+      "expected_output_type": "system_design_doc"
+    },
+    {
+      "id": "DESIGN-006",
+      "domain": "DESIGN",
+      "difficulty": 4,
+      "title": "设计Feature Flag系统",
+      "description": "设计一个企业级Feature Flag（功能开关）系统。要求：\n1. 多种flag类型：Boolean、Percentage Rollout、Targeted（按用户ID/属性）\n2. 实时生效（延迟<1秒）\n3. 支持依赖关系（Flag A打开时Flag B才有意义）\n4. 审计日志（谁在什么时间改了什么flag）\n5. SDK支持多语言\n6. Kill Switch（紧急关闭某功能的一键开关）\n\n讨论：如何避免技术债务堆积（flag清理机制）。",
+      "acceptance_criteria": [
+        "Flag类型覆盖完整",
+        "实时生效的方案可行",
+        "依赖关系处理正确",
+        "审计日志设计完整",
+        "Flag清理机制具体可行"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.4,
+        "completeness": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE",
+        "STRAT"
+      ],
+      "expected_output_type": "system_design_doc"
+    },
+    {
+      "id": "DESIGN-007",
+      "domain": "DESIGN",
+      "difficulty": 2,
+      "title": "设计数据库Schema：内容平台",
+      "description": "为一个内容发布平台设计数据库Schema。业务：\n用户可以发布文章，文章可以有标签、属于一个分类、可以被其他用户点赞和收藏。文章可以有多个版本（修订历史）。用户可以关注其他用户。\n\n给出：ER图（文字描述）、所有表的DDL、关键索引、查询计划分析（对于以下查询：获取一个用户关注的所有作者的最新10篇文章，按发布时间倒序）。\n使用PostgreSQL。",
+      "acceptance_criteria": [
+        "ER设计覆盖所有实体和关系",
+        "DDL语法正确",
+        "索引设计合理",
+        "关键查询的查询计划分析正确",
+        "考虑了扩展性（分页、大V场景）"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "design_quality": 0.4,
+        "completeness": 0.2
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "database_design"
+    },
+    {
+      "id": "DESIGN-008",
+      "domain": "DESIGN",
+      "difficulty": 5,
+      "title": "设计跨数据中心的分布式存储",
+      "description": "设计一个支持跨3个数据中心（美东、美西、欧洲）的分布式键值存储系统。\n要求：\n1. 强一致性（线性一致性）或最终一致性可选\n2. 容忍单个数据中心故障\n3. 读/写延迟：本地<5ms，跨DC<100ms\n4. 支持事务（至少单行ACID）\n5. 自动故障转移\n\n给出：一致性协议选择（Paxos/Raft vs 其他）、数据分片策略、冲突解决、CAP权衡分析。这不是云服务选型，而是自己设计存储系统。",
+      "acceptance_criteria": [
+        "一致性协议选择有充分理由",
+        "分片策略合理",
+        "冲突解决方案具体",
+        "CAP分析准确",
+        "容灾方案完整"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.5,
+        "completeness": 0.2
+      },
+      "min_steps": 7,
+      "cross_domain": [
+        "CODE",
+        "MATH",
+        "STRAT"
+      ],
+      "expected_output_type": "architecture_design_doc"
+    },
+    {
+      "id": "DESIGN-009",
+      "domain": "DESIGN",
+      "difficulty": 3,
+      "title": "设计Webhook系统",
+      "description": "设计一个可靠的Webhook投递系统。要求：\n1. 支持注册多个webhook URL（按事件类型订阅）\n2. 保证投递（at-least-once），接收方幂等去重\n3. 重试策略（指数退避，最大重试次数可配置）\n4. 投递状态追踪（成功/失败/待重试）和Dashboard\n5. 签名验证（HMAC）保证安全\n\n给出：架构设计、数据库模型、重试状态机、安全设计。",
+      "acceptance_criteria": [
+        "架构覆盖所有需求",
+        "重试状态机设计完整",
+        "安全设计（签名验证）正确",
+        "状态追踪和Dashboard设计合理"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.4,
+        "completeness": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "system_design_doc"
+    },
+    {
+      "id": "DESIGN-010",
+      "domain": "DESIGN",
+      "difficulty": 4,
+      "title": "设计搜索引擎（文本检索）",
+      "description": "为一个文档管理系统设计全文搜索引擎。数据规模：\n- 1亿个文档，每个平均10KB\n- 每天新增10万文档\n- 搜索延迟要求P99<200ms\n\n设计内容：\n1. 倒排索引结构设计\n2. 分词和归一化策略（支持中英文）\n3. 相关性排序（TF-IDF或BM25）\n4. 索引构建和增量更新\n5. 分片和副本策略\n\n可以从零设计，也可以基于Elasticsearch/Meilisearch做架构设计。",
+      "acceptance_criteria": [
+        "倒排索引设计合理",
+        "中英文分词策略正确",
+        "排序算法正确",
+        "增量更新方案可行",
+        "分片策略有计算支撑"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.5,
+        "completeness": 0.2
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "CODE",
+        "MATH"
+      ],
+      "expected_output_type": "system_design_doc"
+    },
+    {
+      "id": "DESIGN-011",
+      "domain": "DESIGN",
+      "difficulty": 2,
+      "title": "设计用户认证系统",
+      "description": "为一个微服务架构设计统一的用户认证和授权系统。\n要求：\n1. OAuth2.0 + OIDC支持\n2. JWT token管理（颁发、刷新、撤销）\n3. 多租户支持\n4. SSO单点登录\n5. 审计日志\n\n给出：架构图、token流转过程、安全考量（CSRF、XSS、token存储）、数据库设计。",
+      "acceptance_criteria": [
+        "OAuth2.0/OIDC流程正确",
+        "JWT生命周期管理完整",
+        "多租户隔离方案清晰",
+        "安全考量覆盖主要攻击向量",
+        "架构与微服务兼容"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.4,
+        "completeness": 0.3
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE",
+        "RESEARCH"
+      ],
+      "expected_output_type": "auth_system_design"
+    },
+    {
+      "id": "DESIGN-012",
+      "domain": "DESIGN",
+      "difficulty": 5,
+      "title": "设计代码评审自动化系统",
+      "description": "设计一个基于AI的自动化代码评审系统。要求：\n1. 与GitHub/GitLab PR集成\n2. 多维度评审：正确性、安全性、性能、可维护性、风格\n3. 评审结果分级：阻塞性(必须修改)、建议性(推荐修改)、参考性(可选)\n4. 人类评审者的反馈可用来改进AI评审质量\n5. 支持自定义规则（每个团队可以有自己的编码规范）\n\n给出：系统架构、AI pipeline设计、反馈回路设计、假阳性/假阴性率控制策略。特别讨论：如何避免AI评审变成噪声（过多的误报会让人忽略真正重要的发现）。",
+      "acceptance_criteria": [
+        "系统架构完整且可行",
+        "AI pipeline设计合理",
+        "反馈回路形成闭环",
+        "误报控制策略具体",
+        "与现有PR工作流的集成方式自然"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.4,
+        "innovation": 0.3
+      },
+      "min_steps": 7,
+      "cross_domain": [
+        "CODE",
+        "STRAT",
+        "RESEARCH"
+      ],
+      "expected_output_type": "system_design_doc"
+    },
+    {
+      "id": "DESIGN-013",
+      "domain": "DESIGN",
+      "difficulty": 3,
+      "title": "设计工作流引擎",
+      "description": "设计一个通用的工作流（Workflow）引擎。支持：\n1. DAG定义的工作流（节点=任务，边=依赖）\n2. 条件分支（if/else）\n3. 并行执行和汇合（fork/join）\n4. 超时和重试\n5. 人工审批节点\n6. 工作流版本管理\n\n给出：数据模型、执行引擎设计、状态机、API设计。讨论与Airflow/Temporal的差异化。",
+      "acceptance_criteria": [
+        "数据模型支持DAG+条件+并行",
+        "执行引擎设计合理",
+        "状态机覆盖所有状态转换",
+        "版本管理方案可行",
+        "差异化分析客观"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.4,
+        "completeness": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "CODE"
+      ],
+      "expected_output_type": "system_design_doc"
+    },
+    {
+      "id": "DESIGN-014",
+      "domain": "DESIGN",
+      "difficulty": 1,
+      "title": "设计缓存策略",
+      "description": "为一个高并发电商网站设计多级缓存策略。场景：\n- 商品详情页QPS 10000，商品数据每天更新一次\n- 用户购物车数据实时性要求高\n- 商品库存数据需要准实时（延迟<1秒可接受）\n\n设计：CDN缓存、应用缓存(Redis)、本地缓存的三级策略。对每种数据类型（商品信息、价格、库存、用户session），给出缓存位置、TTL、失效策略、缓存击穿/雪崩防护。",
+      "acceptance_criteria": [
+        "三级缓存策略覆盖所有数据类型",
+        "TTL设置合理",
+        "失效策略正确",
+        "缓存击穿和雪崩防护具体",
+        "考虑了数据一致性问题"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.4,
+        "completeness": 0.3
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "CODE",
+        "STRAT"
+      ],
+      "expected_output_type": "cache_strategy_doc"
+    },
+    {
+      "id": "DESIGN-015",
+      "domain": "DESIGN",
+      "difficulty": 4,
+      "title": "设计事件驱动架构",
+      "description": "为一个电商系统从单体迁移到事件驱动微服务架构做设计。\n核心事件流：用户下单→扣库存→创建支付→支付确认→通知仓库→发送物流→完成。\n\n设计：\n1. 事件定义（事件类型、payload schema、版本管理）\n2. 消息队列/事件总线选型（Kafka vs RabbitMQ vs AWS SQS/SNS vs Redis Streams）\n3. 事件溯源vs事件通知的选择\n4. 处理乱序事件、重复事件、丢失事件的策略\n5. 监控和死信队列\n\n给出完整的架构设计和关键代码骨架。",
+      "acceptance_criteria": [
+        "事件定义完整且可扩展",
+        "消息队列选型有充分理由",
+        "乱序/重复/丢失事件的处理策略正确",
+        "监控和死信队列设计合理",
+        "架构图清晰"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.5,
+        "completeness": 0.2
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "CODE",
+        "STRAT"
+      ],
+      "expected_output_type": "architecture_design_doc"
+    },
+    {
+      "id": "DESIGN-016",
+      "domain": "DESIGN",
+      "difficulty": 5,
+      "title": "设计AGI系统的自我改进机制",
+      "description": "设计一个AI Agent系统能够自我改进的机制。这不是科幻——基于当前LLM的能力边界：\n1. 错误检测：Agent如何检测自己的输出有误（不需要外部监督）\n2. 错误分类：将错误按来源分类（知识缺失、推理错误、工具使用错误、通信误解）\n3. 改进策略：针对每种错误类型，Agent如何自动调整（修改prompt、补充知识、改变策略）\n4. 改进的持久化：如何让改进跨会话保持（记忆系统存储什么）\n5. 防止退化：如何确保改进不会导致能力退化（regression test、A/B验证）\n\n给出完整设计，包括数据结构、算法流程、反馈回路。对DeepSeek面试有参考价值——展示对AGI系统工程的深度思考。",
+      "acceptance_criteria": [
+        "错误检测机制可行",
+        "错误分类体系合理",
+        "改进策略有针对性",
+        "持久化方案具体",
+        "防止退化机制设计合理",
+        "整体设计有理论依据"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.3,
+        "design_quality": 0.4,
+        "innovation": 0.3
+      },
+      "min_steps": 7,
+      "cross_domain": [
+        "STRAT",
+        "CODE",
+        "RESEARCH"
+      ],
+      "expected_output_type": "system_design_doc"
+    }
+  ]
+}

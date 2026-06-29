@@ -1,0 +1,408 @@
+{
+  "domain": "CODE",
+  "task_count": 17,
+  "tasks": [
+    {
+      "id": "CODE-001",
+      "domain": "CODE",
+      "difficulty": 2,
+      "title": "修复并发竞态条件",
+      "description": "以下Go代码在高并发场景下偶发panic。分析代码，定位根因，提供修复方案并附修改后的代码。\n\ntype Cache struct { mu sync.RWMutex; items map[string]*Item }\nfunc (c *Cache) Get(key string) *Item {\n    c.mu.RLock(); defer c.mu.RUnlock()\n    item := c.items[key]\n    if item != nil && item.expired() { c.items[key] = nil; return nil }\n    return item\n}\n\n已知：expired()方法没有副作用，items的写操作在另一个goroutine中进行。请给出完整分析。",
+      "acceptance_criteria": [
+        "正确识别竞态条件的根因",
+        "给出至少两种可行修复方案并比较优劣",
+        "修复后的代码不再有竞态条件",
+        "解释为什么原始代码在高并发下会panic"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.5,
+        "completeness": 0.3,
+        "quality": 0.2
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "RESEARCH"
+      ],
+      "expected_output_type": "code_with_explanation"
+    },
+    {
+      "id": "CODE-002",
+      "domain": "CODE",
+      "difficulty": 3,
+      "title": "设计可扩展的RBAC权限系统",
+      "description": "为一个SaaS平台设计基于RBAC的权限系统。要求支持：\n1. 租户隔离（多租户，每个租户可有自己的角色定义）\n2. 细粒度权限（资源级别，如只能编辑自己创建的文档）\n3. 权限继承（角色可继承其他角色的权限）\n4. 临时权限授予（有时效性的权限提升）\n\n请给出：数据模型设计、API接口设计、关键代码片段。解释设计中的关键权衡。",
+      "acceptance_criteria": [
+        "数据模型覆盖所有四种需求",
+        "API设计RESTful且完整",
+        "代码片段可编译",
+        "明确说明至少2个设计权衡及选择理由"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "quality": 0.3
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "DESIGN",
+        "STRAT"
+      ],
+      "expected_output_type": "design_doc_with_code"
+    },
+    {
+      "id": "CODE-003",
+      "domain": "CODE",
+      "difficulty": 4,
+      "title": "实现分布式ID生成器",
+      "description": "设计并实现一个分布式唯一ID生成器，满足：\n1. 全局唯一（跨数据中心）\n2. 趋势递增（利于数据库索引）\n3. 高性能（单机>10万QPS）\n4. 不依赖外部服务也能工作\n5. 支持从ID中解析出生成时间戳和机器标识\n\n实现语言不限，需给出完整代码和设计文档。",
+      "acceptance_criteria": [
+        "ID结构定义清晰，含时间戳+机器标识+序列号",
+        "给出冲突分析（时钟回拨如何处理）",
+        "代码可编译运行",
+        "性能分析支持10万QPS的结论"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.5,
+        "completeness": 0.25,
+        "quality": 0.25
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "MATH",
+        "DESIGN"
+      ],
+      "expected_output_type": "code_with_design_doc"
+    },
+    {
+      "id": "CODE-004",
+      "domain": "CODE",
+      "difficulty": 1,
+      "title": "SQL查询优化",
+      "description": "以下SQL查询在百万级数据量下执行超过10秒。分析慢查询原因，给出优化方案（包括但不限于索引优化、查询重写），并提供优化后的SQL。\n\nSELECT u.name, COUNT(o.id) as order_count, SUM(o.amount) as total_amount\nFROM users u LEFT JOIN orders o ON u.id = o.user_id\nWHERE o.created_at > DATE_SUB(NOW(), INTERVAL 30 DAY)\n  AND o.status IN ('paid','shipped','delivered')\nGROUP BY u.id ORDER BY total_amount DESC LIMIT 50;\n\n已知：users表10万行，orders表500万行。",
+      "acceptance_criteria": [
+        "正确分析慢查询根因",
+        "给出索引优化方案（含具体DDL）",
+        "重写后的SQL正确且语义等价",
+        "说明优化前后的预期性能差异"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.5,
+        "completeness": 0.3,
+        "quality": 0.2
+      },
+      "min_steps": 3,
+      "cross_domain": [
+        "RESEARCH"
+      ],
+      "expected_output_type": "sql_with_explanation"
+    },
+    {
+      "id": "CODE-005",
+      "domain": "CODE",
+      "difficulty": 3,
+      "title": "重构上帝类",
+      "description": "以下是一个上帝类（Java），包含太多职责。分析问题，给出重构方案，输出重构后的代码结构。\n\npublic class OrderService {\n  public Order createOrder(Cart cart, User user) { /* 验证库存、计算价格、创建订单、发送邮件 */ }\n  public void processPayment(Order order, PaymentInfo info) { /* 支付处理、更新状态、通知仓库 */ }\n  public void shipOrder(Order order, Address addr) { /* 选择物流、生成运单、更新库存 */ }\n  public Report generateSalesReport(DateRange range) { /* 查询订单、聚合数据、格式化 */ }\n  public void sendPromotion(User user, Promotion promo) { /* 过滤用户、生成内容、发送 */ }\n}\n\n重构目标：单一职责、开闭原则、可测试性。给出重构后的类图/代码结构。",
+      "acceptance_criteria": [
+        "正确识别至少5个独立职责",
+        "重构方案遵循SOLID原则",
+        "给出至少3个新类的完整代码骨架",
+        "说明重构对可测试性的提升"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "quality": 0.3
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "DESIGN"
+      ],
+      "expected_output_type": "code_with_design_explanation"
+    },
+    {
+      "id": "CODE-006",
+      "domain": "CODE",
+      "difficulty": 5,
+      "title": "设计实时协作编辑系统的CRDT",
+      "description": "设计一个基于CRDT的实时协作文本编辑器核心数据结构。要求：\n1. 支持多用户并发插入/删除字符\n2. 最终一致性保证（无需OT）\n3. 支持光标位置同步\n4. 给出合并算法伪代码\n5. 分析两个用户同时在同位置插入不同字符的行为\n\n给出核心数据结构和关键算法。",
+      "acceptance_criteria": [
+        "CRDT数据结构定义完整",
+        "插入和删除操作定义清晰",
+        "合并算法无冲突",
+        "正确分析边界场景",
+        "给出至少一个已知CRDT方案的对比"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.5,
+        "completeness": 0.3,
+        "quality": 0.2
+      },
+      "min_steps": 7,
+      "cross_domain": [
+        "MATH",
+        "RESEARCH"
+      ],
+      "expected_output_type": "design_doc_with_pseudocode"
+    },
+    {
+      "id": "CODE-007",
+      "domain": "CODE",
+      "difficulty": 4,
+      "title": "实现无锁并发队列",
+      "description": "设计并实现一个无锁（lock-free）多生产者-多消费者队列。要求：\n1. 使用CAS操作而非互斥锁\n2. 支持有界和无界两种模式\n3. 给出ABA问题的分析和解决方案\n4. 给出与std::mutex+condition_variable版本的性能对比分析\n实现语言C++或Rust，需完整可编译代码。",
+      "acceptance_criteria": [
+        "队列接口定义清晰",
+        "CAS操作使用正确",
+        "ABA问题的分析和解决方案正确",
+        "性能对比有数据支撑"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.5,
+        "completeness": 0.3,
+        "quality": 0.2
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "MATH"
+      ],
+      "expected_output_type": "code_with_analysis"
+    },
+    {
+      "id": "CODE-008",
+      "domain": "CODE",
+      "difficulty": 2,
+      "title": "编写可测试的HTTP客户端封装",
+      "description": "为一个微服务系统编写HTTP客户端封装层。要求：\n1. 支持重试策略（指数退避）\n2. 支持断路器模式\n3. 支持请求/响应拦截器链\n4. 完全可测试（依赖注入，mock友好）\n\n给出接口设计+实现代码+单元测试用例设计。语言Python或Go。",
+      "acceptance_criteria": [
+        "重试和断路器逻辑正确",
+        "拦截器链设计合理",
+        "依赖注入使得所有依赖可mock",
+        "单元测试用例设计覆盖关键路径"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "quality": 0.3
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "DESIGN"
+      ],
+      "expected_output_type": "code_with_tests"
+    },
+    {
+      "id": "CODE-009",
+      "domain": "CODE",
+      "difficulty": 3,
+      "title": "实现简单正则表达式引擎",
+      "description": "实现一个简单的正则表达式引擎，至少支持：\n1. 字面量匹配\n2. . (匹配任意单字符)\n3. * (零个或多个)\n4. + (一个或多个)\n5. ? (零个或一个)\n6. ^ 和 $ (行首行尾锚点)\n\n使用NFA/DFA方法，给出设计和完整实现代码。语言不限。",
+      "acceptance_criteria": [
+        "正则引擎可编译运行",
+        "至少5个测试用例通过（含边界情况）",
+        "解释NFA→DFA转换过程",
+        "给出时间/空间复杂度分析"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.5,
+        "completeness": 0.3,
+        "quality": 0.2
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "MATH"
+      ],
+      "expected_output_type": "code_with_explanation"
+    },
+    {
+      "id": "CODE-010",
+      "domain": "CODE",
+      "difficulty": 5,
+      "title": "设计分布式事务方案",
+      "description": "一个电商系统需要确保订单创建和库存扣减的原子性，但订单服务和库存服务使用不同数据库。\n设计分布式事务方案，考虑：\n1. 最终一致性 vs 强一致性\n2. 补偿事务（Saga模式）\n3. 幂等性保证\n4. 故障恢复（任意步骤失败的回滚策略）\n5. 并发冲突处理\n\n给出：架构图（文字描述）、关键代码伪代码、状态机定义。",
+      "acceptance_criteria": [
+        "明确选择一致性模型并给出理由",
+        "Saga编排/编排模式定义清晰",
+        "幂等性方案具体可实施",
+        "故障恢复状态机完整",
+        "考虑至少2个边界情况"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.5,
+        "completeness": 0.3,
+        "quality": 0.2
+      },
+      "min_steps": 7,
+      "cross_domain": [
+        "STRAT",
+        "DESIGN"
+      ],
+      "expected_output_type": "architecture_doc"
+    },
+    {
+      "id": "CODE-011",
+      "domain": "CODE",
+      "difficulty": 1,
+      "title": "编写安全的用户输入验证函数",
+      "description": "为一个Web应用编写用户输入验证模块。需处理：\n1. XSS注入防护\n2. SQL注入防护（输入层面）\n3. 邮箱/手机号/URL格式验证\n4. 长度和字符集限制\n\n给出完整实现代码（Python或JavaScript），包含至少10个测试用例。",
+      "acceptance_criteria": [
+        "XSS和SQL注入向量被正确防护",
+        "格式验证正则正确",
+        "边界情况处理（空输入、超长输入、Unicode）",
+        "测试用例覆盖正常和异常路径"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.5,
+        "completeness": 0.25,
+        "quality": 0.25
+      },
+      "min_steps": 3,
+      "cross_domain": [
+        "RESEARCH"
+      ],
+      "expected_output_type": "code_with_tests"
+    },
+    {
+      "id": "CODE-012",
+      "domain": "CODE",
+      "difficulty": 4,
+      "title": "设计API限流系统",
+      "description": "设计一个API限流（Rate Limiting）中间件。要求：\n1. 支持多种限流策略：固定窗口、滑动窗口、令牌桶、漏桶\n2. 支持多维度限流：按用户/按IP/按API端点/按租户\n3. 分布式场景下的一致性保证\n4. 给出Redis Lua脚本或等效的原子操作实现\n\n给出设计文档+核心代码实现。",
+      "acceptance_criteria": [
+        "四种限流策略都有实现或伪代码",
+        "多维度限流设计合理",
+        "分布式一致性方案可行",
+        "Redis脚本或等效实现正确"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.5,
+        "completeness": 0.3,
+        "quality": 0.2
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "DESIGN",
+        "MATH"
+      ],
+      "expected_output_type": "design_doc_with_code"
+    },
+    {
+      "id": "CODE-013",
+      "domain": "CODE",
+      "difficulty": 3,
+      "title": "排查内存泄漏",
+      "description": "以下Python服务在运行48小时后内存从200MB增长到2GB。分析可能的内存泄漏原因，给出排查方法和工具，提供代码审查检查清单。\n\n已知：服务使用asyncio，大量使用闭包和装饰器，有自定义缓存，使用了第三方ML库。",
+      "acceptance_criteria": [
+        "识别至少4种可能的内存泄漏来源",
+        "给出具体的排查命令/工具",
+        "提供代码审查检查清单",
+        "对每种泄漏给出修复建议"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.4,
+        "completeness": 0.3,
+        "quality": 0.3
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "RESEARCH"
+      ],
+      "expected_output_type": "analysis_with_checklist"
+    },
+    {
+      "id": "CODE-014",
+      "domain": "CODE",
+      "difficulty": 5,
+      "title": "实现LSM-Tree存储引擎",
+      "description": "设计并实现一个简化的LSM-Tree存储引擎。要求：\n1. MemTable（内存中的有序结构）\n2. SSTable（磁盘上的不可变文件）\n3. Compaction策略（至少Leveled Compaction）\n4. Bloom Filter加速点查询\n5. Write-Ahead Log保证持久性\n\n给出核心数据结构和关键算法实现。语言不限。",
+      "acceptance_criteria": [
+        "MemTable和SSTable结构定义清晰",
+        "Compaction策略逻辑正确",
+        "Bloom Filter实现正确",
+        "WAL机制完整",
+        "至少5个测试用例"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.5,
+        "completeness": 0.3,
+        "quality": 0.2
+      },
+      "min_steps": 8,
+      "cross_domain": [
+        "MATH",
+        "DESIGN"
+      ],
+      "expected_output_type": "code_with_design_doc"
+    },
+    {
+      "id": "CODE-015",
+      "domain": "CODE",
+      "difficulty": 2,
+      "title": "设计数据库Migration方案",
+      "description": "为一个生产环境的PostgreSQL数据库设计零停机Schema变更方案。\n场景：需要给一个大表（2亿行）添加一个NOT NULL列（带默认值），同时保证服务不中断。\n\n给出：详细步骤、每个步骤的风险评估、回滚方案、代码/脚本。",
+      "acceptance_criteria": [
+        "步骤设计覆盖expand-contract模式",
+        "风险评估和回滚方案完整",
+        "考虑了锁和复制延迟问题",
+        "给出的脚本可直接执行"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.5,
+        "completeness": 0.3,
+        "quality": 0.2
+      },
+      "min_steps": 4,
+      "cross_domain": [
+        "STRAT",
+        "RESEARCH"
+      ],
+      "expected_output_type": "procedure_with_scripts"
+    },
+    {
+      "id": "CODE-016",
+      "domain": "CODE",
+      "difficulty": 3,
+      "title": "实现Event Sourcing模式",
+      "description": "为一个任务管理系统实现Event Sourcing模式。要求：\n1. 所有状态变更以事件形式存储\n2. 支持事件回放重建当前状态\n3. 支持快照优化回放性能\n4. 给出CQRS读模型投影\n\n以Issue状态变更（todo→in_progress→in_review→done）为例，给出完整代码实现。",
+      "acceptance_criteria": [
+        "事件类型定义完整",
+        "事件存储和发布机制正确",
+        "回放逻辑可正确重建状态",
+        "快照策略合理",
+        "CQRS读模型投影正确"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.5,
+        "completeness": 0.3,
+        "quality": 0.2
+      },
+      "min_steps": 5,
+      "cross_domain": [
+        "DESIGN"
+      ],
+      "expected_output_type": "code_with_design"
+    },
+    {
+      "id": "CODE-017",
+      "domain": "CODE",
+      "difficulty": 4,
+      "title": "实现共识算法Raft的领导者选举",
+      "description": "实现Raft共识算法中的领导者选举部分。要求：\n1. 三种节点状态：Follower、Candidate、Leader\n2. 随机选举超时\n3. 任期(term)管理\n4. 投票逻辑\n5. 处理网络分区场景（给出测试用例）\n\n给出完整代码实现（Go或Python），包含模拟网络层的测试。",
+      "acceptance_criteria": [
+        "状态转换逻辑与Raft论文一致",
+        "选举超时随机化正确",
+        "任期比较逻辑正确",
+        "包含至少3个测试场景（正常选举、网络分区、分割投票）"
+      ],
+      "scoring_rubric": {
+        "correctness": 0.5,
+        "completeness": 0.3,
+        "quality": 0.2
+      },
+      "min_steps": 6,
+      "cross_domain": [
+        "MATH"
+      ],
+      "expected_output_type": "code_with_tests"
+    }
+  ]
+}
