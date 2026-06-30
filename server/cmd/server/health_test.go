@@ -136,6 +136,65 @@ func TestServerHealthReadyHandlerMigrationPartiallyApplied(t *testing.T) {
 	}
 }
 
+func TestServerHealthLiveHandler(t *testing.T) {
+	h := &serverHealth{version: "1.2.3"}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	h.liveHandler(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var resp liveResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+
+	if resp.Status != "ok" {
+		t.Fatalf("status = %q, want %q", resp.Status, "ok")
+	}
+	if resp.Version != "1.2.3" {
+		t.Fatalf("version = %q, want %q", resp.Version, "1.2.3")
+	}
+	if resp.Timestamp == "" {
+		t.Fatalf("timestamp is empty")
+	}
+
+	// Validate timestamp is a valid RFC3339 time string.
+	if _, err := time.Parse(time.RFC3339, resp.Timestamp); err != nil {
+		t.Fatalf("timestamp %q is not valid RFC3339: %v", resp.Timestamp, err)
+	}
+}
+
+func TestServerHealthLiveHandlerDefaultVersion(t *testing.T) {
+	h := &serverHealth{} // version is empty string (default)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	h.liveHandler(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var resp liveResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+
+	if resp.Status != "ok" {
+		t.Fatalf("status = %q, want %q", resp.Status, "ok")
+	}
+	if resp.Version != "" {
+		t.Fatalf("version = %q, want empty string", resp.Version)
+	}
+	if resp.Timestamp == "" {
+		t.Fatalf("timestamp is empty")
+	}
+}
+
 func TestServerHealthReadinessCachesResult(t *testing.T) {
 	db := &stubReadinessDB{appliedCount: 1}
 	h := &serverHealth{
