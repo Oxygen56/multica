@@ -63,6 +63,30 @@ func (q *Queries) DeleteChatPinnedAgent(ctx context.Context, arg DeleteChatPinne
 	return err
 }
 
+const deleteChatPinnedAgentsBySystemRuntimeAgents = `-- name: DeleteChatPinnedAgentsBySystemRuntimeAgents :exec
+DELETE FROM chat_pinned_agent
+WHERE agent_id IN (
+    SELECT id FROM agent WHERE runtime_id = $1 AND kind = 'system'
+)
+`
+
+// Scoped to the system agents a runtime delete hard-deletes. User agents keep
+// their pins: since MUL-5559 they survive their runtime as unbound agents.
+func (q *Queries) DeleteChatPinnedAgentsBySystemRuntimeAgents(ctx context.Context, runtimeID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteChatPinnedAgentsBySystemRuntimeAgents, runtimeID)
+	return err
+}
+
+const deleteChatPinnedAgentsByWorkspace = `-- name: DeleteChatPinnedAgentsByWorkspace :exec
+DELETE FROM chat_pinned_agent
+WHERE workspace_id = $1
+`
+
+func (q *Queries) DeleteChatPinnedAgentsByWorkspace(ctx context.Context, workspaceID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteChatPinnedAgentsByWorkspace, workspaceID)
+	return err
+}
+
 const getMaxChatPinnedAgentPosition = `-- name: GetMaxChatPinnedAgentPosition :one
 SELECT COALESCE(MAX(position), 0)::float8 AS max_position
 FROM chat_pinned_agent

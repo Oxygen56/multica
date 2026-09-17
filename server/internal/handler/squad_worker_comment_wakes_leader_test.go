@@ -50,8 +50,8 @@ func TestCreateComment_WorkerAgentCommentWakesSquadLeader_MUL4015(t *testing.T) 
 	}
 	var workerTaskID string
 	if err := testPool.QueryRow(ctx, `
-		INSERT INTO agent_task_queue (agent_id, runtime_id, issue_id, status, is_leader_task, originator_user_id)
-		VALUES ($1, $2, $3, 'running', FALSE, $4)
+		INSERT INTO agent_task_queue (agent_id, runtime_id, issue_id, status, is_leader_task, originator_user_id, accountable_user_id)
+		VALUES ($1, $2, $3, 'running', FALSE, $4, $4)
 		RETURNING id
 	`, fx.OtherID, workerRuntimeID, issueID, testUserID).Scan(&workerTaskID); err != nil {
 		t.Fatalf("seed worker task: %v", err)
@@ -65,8 +65,8 @@ func TestCreateComment_WorkerAgentCommentWakesSquadLeader_MUL4015(t *testing.T) 
 		t.Fatalf("load leader runtime: %v", err)
 	}
 	if _, err := testPool.Exec(ctx, `
-		INSERT INTO agent_task_queue (agent_id, runtime_id, issue_id, status, is_leader_task, originator_user_id)
-		VALUES ($1, $2, $3, 'completed', TRUE, $4)
+		INSERT INTO agent_task_queue (agent_id, runtime_id, issue_id, status, is_leader_task, originator_user_id, accountable_user_id)
+		VALUES ($1, $2, $3, 'completed', TRUE, $4, $4)
 	`, fx.LeaderID, leaderRuntimeID, issueID, testUserID); err != nil {
 		t.Fatalf("seed leader task: %v", err)
 	}
@@ -99,14 +99,14 @@ func TestCreateComment_WorkerAgentCommentWakesSquadLeader_MUL4015(t *testing.T) 
 	}
 }
 
-// TestCreateComment_WorkerAgentCommentDoesNotWakeLeader_WhenLeaderTaskPending
+// TestCreateComment_WorkerAgentCommentQueuesSeparatelyFromLeaderAssignment
 // pins the dedup behavior: when the squad leader ALREADY has a queued or
 // dispatched task on the issue, a worker's completion comment does not double-
 // enqueue a second leader task. This is the desired "coalescing" behavior in
 // production — the leader is going to run once and will observe the worker's
 // comment in that run. Regression coverage so nobody drops the dedup and
 // starts stacking duplicate leader runs.
-func TestCreateComment_WorkerAgentCommentDoesNotWakeLeader_WhenLeaderTaskPending(t *testing.T) {
+func TestCreateComment_WorkerAgentCommentQueuesSeparatelyFromLeaderAssignment(t *testing.T) {
 	if testHandler == nil || testPool == nil {
 		t.Skip("database not available")
 	}
@@ -125,8 +125,8 @@ func TestCreateComment_WorkerAgentCommentDoesNotWakeLeader_WhenLeaderTaskPending
 	}
 	var workerTaskID string
 	if err := testPool.QueryRow(ctx, `
-		INSERT INTO agent_task_queue (agent_id, runtime_id, issue_id, status, is_leader_task, originator_user_id)
-		VALUES ($1, $2, $3, 'running', FALSE, $4)
+		INSERT INTO agent_task_queue (agent_id, runtime_id, issue_id, status, is_leader_task, originator_user_id, accountable_user_id)
+		VALUES ($1, $2, $3, 'running', FALSE, $4, $4)
 		RETURNING id
 	`, fx.OtherID, workerRuntimeID, issueID, testUserID).Scan(&workerTaskID); err != nil {
 		t.Fatalf("seed worker task: %v", err)
@@ -140,8 +140,8 @@ func TestCreateComment_WorkerAgentCommentDoesNotWakeLeader_WhenLeaderTaskPending
 		t.Fatalf("load leader runtime: %v", err)
 	}
 	if _, err := testPool.Exec(ctx, `
-		INSERT INTO agent_task_queue (agent_id, runtime_id, issue_id, status, is_leader_task, originator_user_id)
-		VALUES ($1, $2, $3, 'queued', TRUE, $4)
+		INSERT INTO agent_task_queue (agent_id, runtime_id, issue_id, status, is_leader_task, originator_user_id, accountable_user_id)
+		VALUES ($1, $2, $3, 'queued', TRUE, $4, $4)
 	`, fx.LeaderID, leaderRuntimeID, issueID, testUserID); err != nil {
 		t.Fatalf("seed queued leader task: %v", err)
 	}
@@ -159,8 +159,7 @@ func TestCreateComment_WorkerAgentCommentDoesNotWakeLeader_WhenLeaderTaskPending
 		t.Fatalf("CreateComment: expected 201, got %d: %s", w.Code, w.Body.String())
 	}
 
-	// Expected: still exactly 1 queued leader task (the pre-seeded one) —
-	// no double enqueue.
+	// The new comment thread queues independently of the assignment run.
 	var leaderTasks int
 	if err := testPool.QueryRow(ctx, `
 		SELECT count(*) FROM agent_task_queue
@@ -168,8 +167,8 @@ func TestCreateComment_WorkerAgentCommentDoesNotWakeLeader_WhenLeaderTaskPending
 	`, issueID, fx.LeaderID).Scan(&leaderTasks); err != nil {
 		t.Fatalf("count leader tasks: %v", err)
 	}
-	if leaderTasks != 1 {
-		t.Fatalf("expected 1 queued leader task (dedup), got %d", leaderTasks)
+	if leaderTasks != 2 {
+		t.Fatalf("expected separate assignment and comment tasks, got %d", leaderTasks)
 	}
 }
 
@@ -270,8 +269,8 @@ func TestCreateComment_WorkerAgentCommentWakesPrivateSquadLeader_MUL4015(t *test
 	}
 	var leaderTaskID string
 	if err := testPool.QueryRow(ctx, `
-		INSERT INTO agent_task_queue (agent_id, runtime_id, issue_id, status, is_leader_task, originator_user_id, squad_id)
-		VALUES ($1, $2, $3, 'running', TRUE, $4, $5)
+		INSERT INTO agent_task_queue (agent_id, runtime_id, issue_id, status, is_leader_task, originator_user_id, accountable_user_id, squad_id)
+		VALUES ($1, $2, $3, 'running', TRUE, $4, $4, $5)
 		RETURNING id
 	`, leaderID, leaderRuntimeID, issueID, testUserID, squadID).Scan(&leaderTaskID); err != nil {
 		t.Fatalf("seed leader task: %v", err)

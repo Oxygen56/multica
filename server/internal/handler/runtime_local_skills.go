@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	obsmetrics "github.com/multica-ai/multica/server/internal/metrics"
 	"github.com/multica-ai/multica/server/internal/util"
 	db "github.com/multica-ai/multica/server/pkg/db/generated"
 	"github.com/multica-ai/multica/server/pkg/protocol"
@@ -88,7 +89,7 @@ type LocalSkillListStore interface {
 	// never start a claim they might have to abort.
 	HasPending(ctx context.Context, runtimeID string) (bool, error)
 	PopPending(ctx context.Context, runtimeID string) (*RuntimeLocalSkillListRequest, error)
-	Complete(ctx context.Context, id string, skills []RuntimeLocalSkillSummary, supported bool) error
+	Complete(ctx context.Context, id string, skills []RuntimeLocalSkillSummary, supported bool, mcpServers []RuntimeLocalMcpServerSummary, mcpSupported bool) error
 	Fail(ctx context.Context, id string, errMsg string) error
 }
 
@@ -178,12 +179,25 @@ type RuntimeLocalSkillSummary struct {
 	SourcePath  string `json:"source_path"`
 	Provider    string `json:"provider"`
 	// Root classifies the discovery root the daemon found this skill under:
-	// "provider" (the runtime's own skill directory, e.g. ~/.claude/skills)
-	// or "universal" (the cross-tool ~/.agents/skills fallback). Daemons
+	// "provider" (the runtime's own skill directory, e.g. ~/.claude/skills),
+	// "universal" (the cross-tool ~/.agents/skills fallback), or "plugin"
+	// for a skill contributed by an enabled runtime plugin. Daemons
 	// that predate multi-root discovery omit it; an empty value means
 	// "unknown" and the UI should not assert either origin.
-	Root      string `json:"root,omitempty"`
-	FileCount int    `json:"file_count"`
+	Root       string `json:"root,omitempty"`
+	Plugin     string `json:"plugin,omitempty"`
+	CanDisable bool   `json:"can_disable,omitempty"`
+	FileCount  int    `json:"file_count"`
+}
+
+// RuntimeLocalMcpServerSummary is deliberately non-secret. The daemon only
+// reports the configured server name, transport, and config scope; command
+// arguments, URLs, headers, and environment values never leave the machine.
+type RuntimeLocalMcpServerSummary struct {
+	Name      string `json:"name"`
+	Transport string `json:"transport,omitempty"`
+	Source    string `json:"source,omitempty"`
+	Enabled   bool   `json:"enabled"`
 }
 
 type RuntimeLocalSkillListRequest struct {
@@ -192,6 +206,8 @@ type RuntimeLocalSkillListRequest struct {
 	Status       RuntimeLocalSkillRequestStatus `json:"status"`
 	Skills       []RuntimeLocalSkillSummary     `json:"skills,omitempty"`
 	Supported    bool                           `json:"supported"`
+	McpServers   []RuntimeLocalMcpServerSummary `json:"mcp_servers,omitempty"`
+	McpSupported bool                           `json:"mcp_supported"`
 	Error        string                         `json:"error,omitempty"`
 	CreatedAt    time.Time                      `json:"created_at"`
 	UpdatedAt    time.Time                      `json:"updated_at"`
@@ -304,7 +320,7 @@ func (s *InMemoryLocalSkillListStore) PopPending(_ context.Context, runtimeID st
 	return oldest, nil
 }
 
-func (s *InMemoryLocalSkillListStore) Complete(_ context.Context, id string, skills []RuntimeLocalSkillSummary, supported bool) error {
+func (s *InMemoryLocalSkillListStore) Complete(_ context.Context, id string, skills []RuntimeLocalSkillSummary, supported bool, mcpServers []RuntimeLocalMcpServerSummary, mcpSupported bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -312,6 +328,8 @@ func (s *InMemoryLocalSkillListStore) Complete(_ context.Context, id string, ski
 		req.Status = RuntimeLocalSkillCompleted
 		req.Skills = skills
 		req.Supported = supported
+		req.McpServers = mcpServers
+		req.McpSupported = mcpSupported
 		req.UpdatedAt = time.Now()
 	}
 	return nil
@@ -526,31 +544,39 @@ func runtimeLocalSkillRequestTerminal(status RuntimeLocalSkillRequestStatus) boo
 		status == RuntimeLocalSkillTimeout || status == RuntimeLocalSkillConflict
 }
 
-func (h *Handler) requireRuntimeLocalSkillAccess(w http.ResponseWriter, r *http.Request, runtimeID string) (runtimeIDAndWorkspace, bool) {
-	runtimeUUID, ok := parseUUIDOrBadRequest(w, runtimeID, "runtime_id")
+// requireRuntimeCapabilityReadAccess applies the runtime read gate to
+// capability discovery (local skills + the redacted MCP inventory). Private
+// machines remain owner-only even for admins; public runtimes are readable by
+// workspace members. Flows that copy skill files off the owner's machine add
+// the stricter owner-only check in requireRuntimeLocalSkillAccess.
+func (h *Handler) requireRuntimeCapabilityReadAccess(w http.ResponseWriter, r *http.Request, source, runtimeID string) (runtimeIDAndWorkspace, db.Member, bool) {
+	rt, member, ok := h.requireRuntimeReadAccess(w, r, source, runtimeID)
 	if !ok {
-		return runtimeIDAndWorkspace{}, false
-	}
-
-	rt, err := h.Queries.GetAgentRuntime(r.Context(), runtimeUUID)
-	if err != nil {
-		writeError(w, http.StatusNotFound, "runtime not found")
-		return runtimeIDAndWorkspace{}, false
+		return runtimeIDAndWorkspace{}, db.Member{}, false
 	}
 
 	wsID := uuidToString(rt.WorkspaceID)
-	member, ok := h.requireWorkspaceMember(w, r, wsID, "runtime not found")
+
+	return runtimeIDAndWorkspace{
+		runtimeID:   uuidToString(rt.ID),
+		workspaceID: wsID,
+		provider:    rt.Provider,
+		status:      rt.Status,
+		ownerID:     uuidToString(rt.OwnerID),
+	}, member, true
+}
+
+// requireRuntimeLocalSkillAccess additionally requires the caller to own the
+// runtime. Import reads full skill file contents from the owner's machine, so
+// it stays owner-only even for workspace owners/admins.
+func (h *Handler) requireRuntimeLocalSkillAccess(w http.ResponseWriter, r *http.Request, source, runtimeID string) (runtimeIDAndWorkspace, bool) {
+	rt, member, ok := h.requireRuntimeCapabilityReadAccess(w, r, source, runtimeID)
 	if !ok {
 		return runtimeIDAndWorkspace{}, false
 	}
 
-	if rt.OwnerID.Valid && uuidToString(rt.OwnerID) == uuidToString(member.UserID) {
-		return runtimeIDAndWorkspace{
-			runtimeID:   uuidToString(rt.ID),
-			workspaceID: wsID,
-			provider:    rt.Provider,
-			status:      rt.Status,
-		}, true
+	if rt.ownerID != "" && rt.ownerID == uuidToString(member.UserID) {
+		return rt, true
 	}
 
 	writeError(w, http.StatusForbidden, "insufficient permissions")
@@ -562,11 +588,12 @@ type runtimeIDAndWorkspace struct {
 	workspaceID string
 	provider    string
 	status      string
+	ownerID     string
 }
 
 func (h *Handler) InitiateListLocalSkills(w http.ResponseWriter, r *http.Request) {
 	runtimeID := chi.URLParam(r, "runtimeId")
-	rt, ok := h.requireRuntimeLocalSkillAccess(w, r, runtimeID)
+	rt, _, ok := h.requireRuntimeCapabilityReadAccess(w, r, obsmetrics.RuntimeLookupSourceRuntimeAPI, runtimeID)
 	if !ok {
 		return
 	}
@@ -580,12 +607,13 @@ func (h *Handler) InitiateListLocalSkills(w http.ResponseWriter, r *http.Request
 		writeError(w, http.StatusInternalServerError, "failed to enqueue local skills request: "+err.Error())
 		return
 	}
+	h.requestDaemonPendingWork(rt.runtimeID, protocol.PendingWorkKindLocalSkills)
 	writeJSON(w, http.StatusOK, req)
 }
 
 func (h *Handler) GetLocalSkillListRequest(w http.ResponseWriter, r *http.Request) {
 	runtimeID := chi.URLParam(r, "runtimeId")
-	rt, ok := h.requireRuntimeLocalSkillAccess(w, r, runtimeID)
+	rt, _, ok := h.requireRuntimeCapabilityReadAccess(w, r, obsmetrics.RuntimeLookupSourceRuntimeLocalSkillPoll, runtimeID)
 	if !ok {
 		return
 	}
@@ -606,7 +634,7 @@ func (h *Handler) GetLocalSkillListRequest(w http.ResponseWriter, r *http.Reques
 
 func (h *Handler) InitiateImportLocalSkill(w http.ResponseWriter, r *http.Request) {
 	runtimeID := chi.URLParam(r, "runtimeId")
-	rt, ok := h.requireRuntimeLocalSkillAccess(w, r, runtimeID)
+	rt, ok := h.requireRuntimeLocalSkillAccess(w, r, obsmetrics.RuntimeLookupSourceRuntimeAPI, runtimeID)
 	if !ok {
 		return
 	}
@@ -664,12 +692,13 @@ func (h *Handler) InitiateImportLocalSkill(w http.ResponseWriter, r *http.Reques
 		writeError(w, http.StatusInternalServerError, "failed to enqueue local skill import: "+err.Error())
 		return
 	}
+	h.requestDaemonPendingWork(rt.runtimeID, protocol.PendingWorkKindLocalSkillImport)
 	writeJSON(w, http.StatusOK, importReq)
 }
 
 func (h *Handler) GetLocalSkillImportRequest(w http.ResponseWriter, r *http.Request) {
 	runtimeID := chi.URLParam(r, "runtimeId")
-	rt, ok := h.requireRuntimeLocalSkillAccess(w, r, runtimeID)
+	rt, ok := h.requireRuntimeLocalSkillAccess(w, r, obsmetrics.RuntimeLookupSourceRuntimeLocalSkillImportPoll, runtimeID)
 	if !ok {
 		return
 	}
@@ -711,10 +740,12 @@ func (h *Handler) ReportLocalSkillListResult(w http.ResponseWriter, r *http.Requ
 	}
 
 	var body struct {
-		Status    string                     `json:"status"`
-		Skills    []RuntimeLocalSkillSummary `json:"skills"`
-		Supported *bool                      `json:"supported"`
-		Error     string                     `json:"error"`
+		Status       string                         `json:"status"`
+		Skills       []RuntimeLocalSkillSummary     `json:"skills"`
+		Supported    *bool                          `json:"supported"`
+		McpServers   []RuntimeLocalMcpServerSummary `json:"mcp_servers"`
+		McpSupported *bool                          `json:"mcp_supported"`
+		Error        string                         `json:"error"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -726,7 +757,11 @@ func (h *Handler) ReportLocalSkillListResult(w http.ResponseWriter, r *http.Requ
 		if body.Supported != nil {
 			supported = *body.Supported
 		}
-		if err := h.LocalSkillListStore.Complete(r.Context(), requestID, body.Skills, supported); err != nil {
+		mcpSupported := false
+		if body.McpSupported != nil {
+			mcpSupported = *body.McpSupported
+		}
+		if err := h.LocalSkillListStore.Complete(r.Context(), requestID, body.Skills, supported, body.McpServers, mcpSupported); err != nil {
 			// Surface the store failure as 5xx so the daemon can retry instead
 			// of swallowing the report (leaves the request stuck in running
 			// until the server-side timeout, which is exactly the "looks OK but

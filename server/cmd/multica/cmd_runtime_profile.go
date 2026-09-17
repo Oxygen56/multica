@@ -269,16 +269,17 @@ func runRuntimeProfileDelete(cmd *cobra.Command, args []string) error {
 
 	path := runtimeProfilesPath(workspaceID) + "/" + profileID
 	if err := client.DeleteJSON(ctx, path); err != nil {
-		// 409 means the server refused because active agents are still bound
-		// to this profile. Surface the server's explanation verbatim rather
-		// than the generic HTTP wrapper so the user sees what to unbind.
+		// 409 means the server refused — usually because active agents are
+		// still bound to this profile, on machines it names. Surface that
+		// sentence rather than the raw response body: it already reads as
+		// guidance, and it is what tells the user the blockers may be sitting
+		// on a machine other than the one they were cleaning up.
+		if _, msg, isConflict := serverConflictMessage(err); isConflict {
+			return errors.New(msg)
+		}
 		var httpErr *cli.HTTPError
 		if errors.As(err, &httpErr) && httpErr.StatusCode == http.StatusConflict {
-			msg := strings.TrimSpace(httpErr.Body)
-			if msg == "" {
-				msg = "profile still has active agents bound to it"
-			}
-			return fmt.Errorf("cannot delete runtime profile %s: %s", profileID, msg)
+			return fmt.Errorf("cannot delete runtime profile %s: profile still has active agents bound to it", profileID)
 		}
 		return fmt.Errorf("delete runtime profile: %w", err)
 	}
@@ -287,6 +288,9 @@ func runRuntimeProfileDelete(cmd *cobra.Command, args []string) error {
 }
 
 func runRuntimeProfileSetPath(cmd *cobra.Command, args []string) error {
+	if err := requireHumanLocalCommand("runtime profile set-path"); err != nil {
+		return err
+	}
 	profileID := args[0]
 	path, _ := cmd.Flags().GetString("path")
 	path = strings.TrimSpace(path)
@@ -315,6 +319,9 @@ func runRuntimeProfileSetPath(cmd *cobra.Command, args []string) error {
 }
 
 func runRuntimeProfileUnsetPath(cmd *cobra.Command, args []string) error {
+	if err := requireHumanLocalCommand("runtime profile unset-path"); err != nil {
+		return err
+	}
 	profileID := args[0]
 
 	profile := resolveProfile(cmd)
