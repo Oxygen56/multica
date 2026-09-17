@@ -11,11 +11,12 @@
  * ok-plan-linked-taco.md.
  */
 import { Alert, Pressable, View } from "react-native";
-import type { AgentTask, TaskFailureReason } from "@multica/core/types";
+import type { AgentTask } from "@multica/core/types";
 import { Text } from "@/components/ui/text";
 import { ActorAvatar } from "@/components/ui/actor-avatar";
 import { useCancelTask } from "@/data/mutations/issues";
 import { useActorLookup } from "@/data/use-actor-name";
+import { runFailureBadgeLabel } from "@/lib/run-failure-badge";
 import { timeAgo } from "@/lib/time-ago";
 
 interface Props {
@@ -65,9 +66,9 @@ function StatusBadge({ task }: { task: AgentTask }) {
   const label = STATUS_LABEL[task.status] ?? task.status;
   const cls = STATUS_CLASS[task.status] ?? "text-muted-foreground";
   // For failed tasks, surface the failure_reason inline so users don't have
-  // to drill in. Reasons are coarse enums; missing/empty stays as just "Failed".
-  if (task.status === "failed" && task.failure_reason) {
-    const reasonLabel = FAILURE_REASON_LABEL[task.failure_reason];
+  // to drill in. Missing / empty / unrecognised stays as just "Failed".
+  if (task.status === "failed") {
+    const reasonLabel = runFailureBadgeLabel(task.failure_reason);
     if (reasonLabel) {
       return (
         <Text className={`text-xs ${cls}`}>
@@ -148,13 +149,4 @@ const STATUS_CLASS: Record<AgentTask["status"], string> = {
   completed: "text-muted-foreground",
   failed: "text-destructive",
   cancelled: "text-muted-foreground",
-};
-
-const FAILURE_REASON_LABEL: Record<TaskFailureReason, string> = {
-  agent_error: "Agent error",
-  timeout: "Timeout",
-  codex_semantic_inactivity: "Codex inactivity",
-  runtime_offline: "Runtime offline",
-  runtime_recovery: "Runtime recovery",
-  manual: "Manual",
 };
