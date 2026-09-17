@@ -573,7 +573,10 @@
       "bar_authors_more_other": "{{names}} et {{count}} autres",
       "resolve_failed": "Échec de la résolution du fil",
       "unresolve_failed": "Échec de la réouverture du fil"
-    }
+    },
+    "expand_full_text": "Afficher le texte intégral",
+    "loading_full_text": "Chargement...",
+    "retry_load_full_text": "Réessayer"
   },
   "reply": {
     "placeholder": "Laisser une réponse...",
